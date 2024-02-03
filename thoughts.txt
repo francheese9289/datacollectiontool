@@ -1,0 +1,50 @@
+view---Name---value
+student info shown (not just ids)--STUDENT--1
+classroom view with students visible--CLASS--2
+grade level views--GRADE--4
+school view--SCHOOL--8
+district view--DISTRICT--16
+students over time--YOY--32
+
+in an ideal world:
+
+from FLASK BOOK:
+using powers of 2 for permissions allows them to be combined
+ex. district + school = 24
+
+To implement restricted views based on roles and specific permissions tied to a school or class, you need a system that checks not only the user's role but also their association with a particular school or class. This requires a few key components:
+
+Role and Permission Checking: As previously discussed, you should have a system in place to check the user's role and their permissions.
+
+Association with School or Class: You need to establish a relationship between the user and their specific school or class. This might already be in place if, for example, teachers are associated with classes and principals are associated with schools in your database.
+
+Restricted View Logic: When a user attempts to access a particular view, you'll need to check both their role/permissions and whether they have the authority to access data for that specific school or class.
+
+Here's a basic outline of how you might structure this:
+
+Roles and Permissions: Keep the roles and permissions setup as previously discussed. Ensure each role has the appropriate permissions.
+
+User-School/Class Association:
+
+For teachers, ensure there is a link between them and their specific classes.
+For principals, ensure there is a link between them and their school.
+Access Control in Views:
+
+When a teacher accesses a view, check that they have the appropriate permissions (e.g., CLASS level) and that the class they're trying to access is one they're associated with.
+Similarly, for a principal, check they have SCHOOL level permissions and that the school data they're trying to access is their school.
+Here's a pseudo-code example for a view:
+@restricted_views.route('/classroom_data/<classroom_id>')
+def classroom_data(classroom_id):
+    # Check if the current user is a teacher and has CLASS level permission
+    if current_user.has_role('Teacher') and current_user.has_permission(Permission.CLASS):
+        # Verify that the classroom belongs to the teacher
+        if is_classroom_of_teacher(current_user.id, classroom_id):
+            data = get_classroom_data(classroom_id)
+            return render_template('classroom_data.html', data=data)
+        else:
+            return "Access Denied: You do not have access to this classroom."
+
+    return "Access Denied: Insufficient permissions."
+In this example, is_classroom_of_teacher would be a function that checks if the given classroom is associated with the teacher. You would need a similar setup for principals and schools.
+
+Remember, the key here is not just checking roles and permissions, but also ensuring that the user is trying to access data that they are actually associated with, based on their role.
