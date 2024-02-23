@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.4/css/bulma.min.css" />
+  <link rel="stylesheet" type="text/css" href="../static/css/main.css">
+
+<style>
+  * {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  :root {
+    --shadowDark: #D9DDE6;
+    --background: white;
+    --shadowLight: #EFF5FE;
+  }
+
+  body {
+    background: var(--background);
+  }
+
+  .hero-body {
+    justify-content: center;
+  }
+
+  .login {
+    border-radius: 25px;
+    padding: 1.5rem;
+    box-shadow: 8px 8px 15px var(--shadowDark), -8px -8px 15px var(--shadowLight);
+  }
+
+  input {
+    background: var(--shadowDark) !important;
+  }
+
+  a {
+    font-weight: 600;
+  }
+  .svg-container {
+            width: 25%; 
+            overflow: hidden;
+        }
+</style>
+</head>
+  <section class="hero is-fullheight">
+    <div class="hero-body has-text-centered">
+        <div class="login svg-container">
+          <div style="width: 100%; overflow: hidden;">
+            <img src="https://raw.githubusercontent.com/francheese9289/datacollectiontool/main/QZYbjC01.svg" alt="Your SVG Image" style="width: 100%;" />
+          </div>
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          {{ form.hidden_tag() }}
+          <div class="field">
+            <div class="control">
+              {{ form.first_name.label(class="label") }}
+              {{ form.first_name(class="input is-medium is-rounded", placeholder="Jane", autocomplete="username", required=true) }}
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              {{ form.last_name.label(class="label") }}
+              {{ form.last_name(class="input is-medium is-rounded", placeholder="Doe", autocomplete="username", required=true) }}
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              {{ form.email.label(class="label") }}
+              {{ form.email(class="input is-medium is-rounded", placeholder="hello@example.com", autocomplete="username", required=true) }}
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              {{ form.password.label(class="label") }}
+              {{ form.password(class="input is-medium is-rounded", placeholder="**********", autocomplete="current-password", required=true) }}
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              {{ form.confirm_password.label(class="label") }}
+              {{ form.confirm_password(class="input is-medium is-rounded", placeholder="re-type password", autocomplete="username", required=true) }}
+            </div>
+          </div>
+          <br />
+          <button class="button is-block is-fullwidth is-warning is-medium " type="submit">
+            {{ form.submit}} Register New Account
+          </button>
+        </form>
+        <br>
+           <div>
+          <button class="button is-block is-fullwidth is-dark is-medium ">
+            <a href="{{ url_for('auth.login') }}" class="has-text-black">Returning User</a></button>
+          </div>
+      </div>
+    </div>
+  </section>
+
+</html>

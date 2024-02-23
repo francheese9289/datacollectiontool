@@ -1,0 +1,10 @@
+/thoughts.txt
+/app/static
+__pycache__/
+venv/
+instance/*
+!instance/.gitignore
+.webassets-cache
+.env
+*.py[cod]
+*$py.class

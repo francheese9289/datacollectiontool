@@ -1,0 +1,15 @@
+<!-- profile.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h1 class="mt-4">Profile</h1>
+        <p>Welcome {{ user.username }}</p>
+        <p><b>#{{ roster_df }}</b></p>
+                <b>
+                    <p class="name">{{ user.first_name }} {{ user.last_name }} {{user.set_token}}</p>
+                </b>
+    </div>
+
+{% endblock %}

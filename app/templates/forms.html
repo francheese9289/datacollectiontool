@@ -1,0 +1,42 @@
+<form role="form" method="post" action="">
+    {{ form.hidden_tag() }}
+
+    <div class="input-group mb-3">
+      {{ form.first_name(placeholder="First Name", class="form-control") }}
+      <div class="input-group-append">
+        <div class="input-group-text">
+          <span class="fas fa-user"></span>
+        </div>
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      {{ form.last_name(placeholder="Last Name", class="form-control") }}
+      <div class="input-group-append">
+        <div class="input-group-text">
+          <span class="fas fa-user"></span>
+        </div>
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      {{ form.email(placeholder="Email", class="form-control") }}
+      <div class="input-group-append">
+        <div class="input-group-text">
+          <span class="fas fa-envelope"></span>
+        </div>
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      {{ form.password(placeholder="Password", class="form-control", type="password") }}
+      <div class="input-group-append">
+        <div class="input-group-text">
+          <span class="fas fa-lock"></span>
+        </div>
+      </div>
+    </div>
+      <!-- /.col -->
+      <div class="col-4">
+        <button type="submit" name="register" class="btn btn-primary btn-block">Register</button>
+      </div>
+      <!-- /.col -->
+    </div>
+  </form>
