@@ -89,19 +89,7 @@ class Staff(db.Model):
         staff_full_name = (self.first_name + " " + self.last_name)
         return staff_full_name
 
-    # #REFACTOR THIS - SHOULD BE IN USERS TOO I THINK
-    # def follow_classes(self):
-    #     if self.role_id == 2:
-    #         classrooms = ClassroomSchoolYear.query.filter_by(teacher_id=self.staff_id).all()
-    #         self.followed_classrooms.extend(classrooms)
-
-    #     elif self.role_id == 3:
-    #         school_years = SchoolYear.query.filter_by(principal_id=self.staff_id).all()
-    #         for school_year in school_years:
-    #             classrooms = ClassroomSchoolYear.query.filter_by(school_id=school_year.school_id).all()
-    #             self.followed_classrooms.extend(classrooms)
-
-        # db.session.commit()
+  
 
 
 class User(db.Model, UserMixin):
@@ -116,43 +104,46 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique = True, nullable = False)
     password = db.Column(db.String, nullable = True, default = '')
     staff_member = db.Column(db.Boolean, default = False)
-    token = db.Column(db.String, default = '', unique = True )
-    date_created = db.Column(db.DateTime, nullable = False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
+    staff_id = db.Column(db.Integer, db.ForeignKey('staff.staff_id'))
 
 
-    def __init__(self, email = '', first_name = '', last_name = '', password='', token='', role_id=1, staff_id=''):
+    def __init__(self, email, first_name, last_name, password, role_id=1, staff_id=0):
+        print(f'Init called with email: {email}, first_name: {first_name}, last_name: {last_name}') 
+        
         self.user_id = self.set_id()
         self.email = email
-        self.username = self.create_username() 
         self.first_name = first_name
         self.last_name = last_name
-        self.password = self.set_password(password)
-        self.staff_member = self.is_staff_member()
-        self.token = self.set_token(24)
-        self.role_id = self.get_role_id()
-        self.staff_id = staff_id
+        print(f'Before create_username: {self.first_name}, {self.last_name}') 
+        self.password = self.set_password(password) if password else ''
+        self.username = self.create_username()
+        print(f'After create_username: {self.username}')
+        user_staff_info = self.is_staff_member(email)
+        self.staff_id = user_staff_info['staff_id']
+        self.role_id = user_staff_info['role_id']
+        self.staff_member = user_staff_info['staff_member']
 
     def create_username(self):
+        print(f'create_username called with first_name: {self.first_name}, last_name: {self.last_name}') 
         base_username = (self.first_name[0] + self.last_name).lower()
         username = base_username
         suffix = 1
         while User.query.filter_by(username=username).first() is not None:
             username = f"{base_username}{suffix}"
             suffix += 1
+        self.username = username
         return username
-    pass
+
 
     def __repr__(self):
         return '<User %r>' % self.username
-    
-    #delete? haven't used tokens yet
-    def set_token(self, length):
-        return secrets.token_hex(length)
 
     def set_id(self):
         return str(uuid.uuid4())
+    
+    def get_id(self):
+        return str(self.user_id)
     
     def save(self):
         db.session.add(self)
@@ -163,25 +154,36 @@ class User(db.Model, UserMixin):
         db.session.commit()
 
     def set_password(self, password):
-        self.password = generate_password_hash(password)
-        self.save()
+        self.password = generate_password_hash(password, method='pbkdf2:sha256')
 
-    def check_password(self, plain_text_password):
-        return check_password_hash(self.password, plain_text_password)
 
-    def is_staff_member(self):
-        staff_email = Staff.query.filter_by(email=self.email).first()
-        return staff_email is not None
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
+    def is_authenticated(self):
+        return True
 
-    def get_role_id(self):
-        staff_user = Staff.query.filter_by(email=self.email).with_entities(Staff.role_id, Staff.staff_id).first()
-        if staff_user:
-            self.role_id = staff_user.role_id
-            self.staff_id = staff_user.staff_id
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return not self.is_authenticated()
+
+    #checks to see if user is staff member when creating an account
+    def is_staff_member(self,email):
+        staff_member = Staff.query.filter_by(email=email).with_entities(Staff.role_id, Staff.staff_id).first()
+        if staff_member:
+            staff_id = staff_member.staff_id
+            role_id = staff_member.role_id
+            user_staff= {'staff_id':staff_id,
+                         'role_id': role_id,
+                         'staff_member': True}
         else:
-            self.role_id = 1  
-            self.staff_id = 0
-        return self.role_id
+            user_staff={'staff_id':0,
+                        'role_id':1,
+                        'staff_member': False}
+
+        return user_staff
             
 class School(db.Model):
      '''Unique ids for each school in the WCSU'''
@@ -228,7 +230,7 @@ class Period (db.Model):
 
 class SchoolYear(db.Model):
     '''Associate school years with schools, prinicpals and superintendents'''
-    __tablename__='schoolyears'
+    __tablename__='school_years'
     id = db.Column(db.String(100), primary_key = True)
     school_id = db.Column(db.String(10), db.ForeignKey('schools.id'))
     year_id = db.Column(db.Integer, db.ForeignKey('years.id'))
@@ -246,13 +248,6 @@ class Classroom(db.Model):
     def __init__(self, id, subject):
         self.id = id
         self.subject = subject
-
-#delete?
-# classroom_rosters = db.Table(
-#     'classroom_rosters',
-#     db.Column('student_id',db.Integer,db.ForeignKey('students.id')),
-#     db.Column('classroom_schoolyear_id', db.Integer, db.ForeignKey('classroom_schoolyears.id'))
-# )
 
 class ClassroomSchoolYear(db.Model):
     '''Classroom associates grade level, school and year with their teachers
@@ -319,7 +314,7 @@ class StudentClasses(db.Model):
     #almost wonder if classroom schoolyear and classroom school year period should be an 
     #instance of the classroom class?
     #wrote out logic in thoughts.txt - this might be enough for this project however.
-    __tablename__='student_classrooms'
+    __tablename__='student_classes'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer,db.ForeignKey('students.id'))
     class_sy_p_id = db.Column(db.String(50), db.ForeignKey('classroom_schoolyear_periods.id'))

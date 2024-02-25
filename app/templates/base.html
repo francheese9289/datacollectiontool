@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,77 +9,50 @@
   <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
     integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../static/css/main.css" />
-  <style>
-    @media(max-width: 500px) {
-      .reverse-columns {
-        flex-direction: column-reverse;
-        display: flex;
-      }
-    }
-
-    .titled {
-    font-family: "Poppins", sans-serif !important;
-      font-size: 58px !important;
-      font-weight: 600 !important;
-      line-height: 64px !important;
-    font-style: normal;
-    }
-   
-
-    .subtitled {
-      font-family: "Poppins", sans-serif !important;
-      font-size: 22px !important;
-      font-weight: 400 !important;
-      line-height: 36px !important;
-    }
-  </style>
+  <link rel="stylesheet" href="../static/bootstrap.min.css" />
 </head>
-
 <body>
-    {% if 'user_id' in session %}
-    <div id="navbarBasicExample" class="navbar-menu">
-        <div class="navbar-end">
-        <a href="{{ url_for('main.profile') }}" class="navbar-item">
-          Profile
-        </a>
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a href="{{ url_for('main.dashboard') }}" class="navbar-link">
-            Dashboards
-          </a>
-  
-          <div class="navbar-dropdown">
-            <a class="navbar-item">
-              Main
-            </a>
-            <a class="navbar-item">
-              Schools
-            </a>
-            <a class="navbar-item">
-              Grade Levels
-            </a>
-            <hr class="navbar-divider">
-            <a class="navbar-item">
-              Report an issue
-            </a>
+    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">DCT</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('main.index') }}">Home</a>
+                  <span class="visually-hidden">(current)</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.profile') }}">Profile</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/dash/">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="#">Action</a>
+                  <a class="dropdown-item" href="#">Another action</a>
+                  <a class="dropdown-item" href="#">Something else here</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#">Separated link</a>
+                </div>
+              </li>
+            </ul>
+            <form class="d-flex">
+              <input class="form-control me-sm-2" type="search" placeholder="Search">
+              <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
+            </form>
           </div>
-          <div class="navbar-end">
-          <a href="{{ url_for('auth.logout') }}" class="navbar-item">
-            Logout
-          </a>
         </div>
-      </div>
-      </div>
-      </div>      
-      {% else %}
-
-    </div>
-</div>
-  </nav>
-
- 
-  {% endif %}
-     
+      </nav>
+   
   {% block content %}
   {% endblock %}
 </body>

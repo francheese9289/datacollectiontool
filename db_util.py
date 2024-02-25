@@ -1,11 +1,10 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask import current_app, g, session, Blueprint
 from models import *
 import pandas as pd
 
 
-def user_class_data(staff_id, is_staff, role_id):
+def user_class_data(staff_id, role_id):
     """Pandas dataframe to pull classroom data into staff profiles"""
+    """MIGHT CHANGE THIS TO DICT INSTEAD OF DF?"""
     class_roster = db.session.query(
         Student.student_full_name,
         Staff.staff_full_name,
@@ -26,7 +25,10 @@ def user_class_data(staff_id, is_staff, role_id):
     ).all()
 
     roster_df = pd.DataFrame(class_roster)
+    user_rosters = pd.DataFrame()
 
-    if is_staff and role_id == 2:
-        user_rosters = roster_df.filter_by(roster_df.teacher_id==staff_id)
+    #role_id for teachers
+    if role_id == 2:
+        user_rosters = roster_df.query('teacher_id == @staff_id')
+    #add role_id for principals (might be a different function)& admin
     return user_rosters

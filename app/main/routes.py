@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session
-from flask_login import login_required
+from flask_login import login_required, current_user
 from models import db, User, Student, AssessmentScores, login_manager
 import pandas as pd
-import plotly.express as px
 from db_util import user_class_data
 
 main = Blueprint('main', __name__, template_folder='main_templates')
@@ -10,50 +9,30 @@ main = Blueprint('main', __name__, template_folder='main_templates')
 
 @main.route('/')
 def index():
-    students = Student.query.all()
-    return render_template('index.html', students=students)
+    if current_user.is_authenticated:
+        return redirect(url_for('main.profile'))
+    return render_template('index.html')
 
-
-# @main.route('/dashboard', methods=['GET'])
-# def dashboard():
-#     user_id = session['user_id']
-#     if user_id in session:
-#         scores = AssessmentScores.query.all()
-#         data = pd.DataFrame([(score.id, score.student_score, score.assessment_id) for score in scores],
-#                         columns = ['id', 'student_score','assessment_id'])
-#     table_html = data.to_html()
-#     return render_template('dashboard.html', table_html=table_html)
-
-# #put this back in when not testing or logged in 
-#     # if 'user_id' not in session:
-#     #     flash('Please log in first.', 'danger')
-# #     #     return redirect(url_for('login'))
-
-#     
-#     user = User.get(user_id)
-#     # return render_template('dashboard.html', user=user)
-
-@main.route('/profile/<user_id>')
+@main.route('/profile')
 @login_required
-def profile(user_id):
-    user_id = session['user_id']
-    user = User.query.get(user_id)
-    is_staff = user.is_staff_member()
-    role_id = user.get_role_id()
-    staff_id = None
-    if is_staff:
-        staff_id = user.staff_id  
+def profile():
+    user=current_user
+    roster_df = pd.DataFrame()
 
-    if staff_id > 0:
-        roster_df = user_class_data(staff_id, is_staff, role_id)
+    #filter for current_user's class data
+    if user.role_id > 0:
+        roster_df = user_class_data(user.staff_id, user.role_id)
 
     # Render the profile page with the filtered roster
-    return render_template('profile.html', roster_df=roster_df)
-        
-    # return render_template('profile.html', user=user)
+    return render_template('profile.html', roster_df=roster_df, user=user)
 
-
-# @main.route('/testing')
-# def test():
-#     user_id = session['user_id']
-#     user =
+# @app.route('/')
+# def home():
+#     """Landing page."""
+#     return render_template(
+#         'index.jinja2',
+#         title='Plotly Dash Flask Tutorial',
+#         description='Embed Plotly Dash into your Flask applications.',
+#         template='home-template',
+#         body="This is a homepage served with Flask."
+#     )

@@ -1,11 +1,11 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
+{% block content %}
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Page</title>
+  <title>Register</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.4/css/bulma.min.css" />
   <link rel="stylesheet" type="text/css" href="../static/css/main.css">
@@ -88,7 +88,7 @@
           </div>
           <br />
           <button class="button is-block is-fullwidth is-warning is-medium " type="submit">
-            {{ form.submit}} Register New Account
+              Register New Account
           </button>
         </form>
         <br>
@@ -101,3 +101,4 @@
   </section>
 
 </html>
+{% endblock %}
