@@ -8,7 +8,7 @@ from db_util import *
 
 def init_dashboard(server):
     # Create Dash app instance
-    dash_app = dash.Dash(server=server, routes_pathname_prefix='/dash/', external_stylesheets=[dbc.themes.LUMEN])
+    dash_app = dash.Dash(server=server, routes_pathname_prefix='/dash/', external_stylesheets=[dbc.themes.LITERA])
     
     # Create dashboard layout
     dash_app.layout = html.Div([

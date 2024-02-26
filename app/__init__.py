@@ -5,6 +5,7 @@ from config import Config
 from models import db, login_manager
 
 
+
 def init_app():
     '''Initialize Application'''
     app = Flask(__name__)
@@ -19,7 +20,15 @@ def init_app():
     #database connection
     migrate = Migrate(app, db)
     CORS(app)
+
+    @app.teardown_appcontext
+    def teardown_db(exception=None):
+        db.session.remove()
     
+    @app.before_request
+    def print_connection_status():
+        print("Active connections:", db.engine.pool.status())
+
 
     with app.app_context():
         # blueprints 
@@ -39,4 +48,3 @@ def init_app():
         
 
     return app
-
