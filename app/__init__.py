@@ -42,9 +42,8 @@ def init_app():
         app.register_blueprint(api)
 
         # dash app
-        #might change to blueprint?
-        from .app_dash.dashboard import init_dashboard
-        init_dashboard(app)
+        from .app_dash.dashboard import init_admin_dashboard
+        init_admin_dashboard(app)
         
 
     return app

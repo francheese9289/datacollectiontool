@@ -17,5 +17,3 @@ class Config():
     SQLALCHEMY_POOL_SIZE=20
     #max number of seconds each connection lives, adjust as needed
     SQLALCHEMY_POOL_RECYCLE = 300
-
-

@@ -1,45 +1,70 @@
 from models import *
 import pandas as pd
+from flask_login import current_user
+from sqlalchemy import text
 
+def fetch_all_rosters(staff_id):
+    # Use SQLAlchemy to execute a raw SQL query on the view
+    query = text(f'SELECT * FROM v_detailed_rosters WHERE teacher_id={staff_id}')
+    rosters = db.session.execute(query).fetchall()
+    return rosters
 
-def user_class_data(staff_id, role_id):
-    """Pandas dataframe to pull classroom data into staff profiles"""
-    """MIGHT CHANGE THIS TO DICT INSTEAD OF DF?"""
-    class_roster = db.session.query(
-        Student.student_full_name,
-        Staff.staff_full_name,
-        ClassroomSchoolYear.id,
-        ClassroomSchoolYear.teacher_id,
-        ClassroomSchoolYear.school_id,
-        ClassroomSchoolYear.year_id,
-        Classroom.grade_level_id,
-        StudentClasses
-    ).join(
-        ClassroomSchoolYear, StudentClasses.class_sy_id == ClassroomSchoolYear.id
-    ).join(
-        Student, StudentClasses.student_id == Student.id
-    ).join(
-        Staff, ClassroomSchoolYear.teacher_id == Staff.staff_id
-    ).join(
-        Classroom, ClassroomSchoolYear.classroom_id == Classroom.id
-    ).all()
+def group_rosters_by_class(rosters):
+    rosters_by_class = {}
 
-    roster_df = pd.DataFrame(class_roster)
-    user_rosters = pd.DataFrame()
+    for roster in rosters:
+        class_id = roster[3]
 
-    #role_id for teachers
-    if role_id == 2:
-        user_rosters = roster_df.query('teacher_id == @staff_id')
-    #add role_id for principals (might be a different function)& admin
-    return user_rosters
+        if class_id not in rosters_by_class:
+            rosters_by_class[class_id] = []
 
-classroom_schoolyears_df = pd.DataFrame(ClassroomSchoolYear)
-# room_types_reviewed = air_bnb.groupby(['room_type'], as_index = False).sum(numeric_only = True)[['room_type','number_of_reviews']]
-# room_types_reviewed = room_types_reviewed.sort_values('number_of_reviews', ascending = False)
-def user_rosters_v2(current_user):
-    user = current_user
-    user_classes = pd.DataFrame(ClassroomSchoolYear.query.filter_by('teacher_id == @staff_id'))
-    user_students = pd.DataFrame(StudentClasses.query.filter_by('class_sy_id == user_classes.id')) 
-    demo_ratings = customer_demographics.merge(surveys, on = 'customer_id', how = 'inner')
-    demo_ratings.head()
-#popular_hosts = host_data[(host_data.number_of_reviews >= 100) & (host_data.availability_365 == 0)]
+        rosters_by_class[class_id].append(roster)
+
+    return rosters_by_class
+
+# def fetch_lit_scores(**kwargs):
+
+#     for key, value in kwargs:
+#         query = text(f'SELECT * FROM v_detailed_lit_scores WHERE {key}={value}')
+#         result = db.session.execute(query).fetchall()
+
+def fetch_lit_scores():
+     query = text(f'SELECT * FROM v_detailed_lit_scores')
+     result = db.session.execute(query).fetchall()
+     return result
+
+# def group_lit_scores(school_id):
+#     query = text(f'select 
+# year_id,
+# avg(student_score) as avg_score,
+# assessment_id,
+# student_id, 
+# school_id,
+# short_name,
+# grade_level_id,
+# classroom_id,
+# teacher_id 
+# from v_detailed_lit scores 
+# group by year_id, assessment_id, student_id, school_id,
+# short_name,
+# grade_level_id,
+# classroom_id,
+# teacher_id ')
+
+#     create view v_detailed_lit_scores as
+# select 
+# vals.student_score,
+# vals.assessment_id,
+# vals.student_id,
+# vals.csp_id,
+# vals.periodid,
+# vals.cs_id,
+# vals.subject,
+# vdr.grade_level_id,
+# vdr.year_id,
+# vdr.teacher_id,
+# vdr.student_full_name,
+# vdr.staff_full_name
+# from v_all_lit_scores vals
+# join v_detailed_rosters vdr on
+# vals.student_id=vdr.student_id and vals.cs_id=vdr.class_sy_id;

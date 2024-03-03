@@ -1,30 +1,27 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session
+from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session, abort
 from flask_login import login_required, current_user
 from models import db, User, Student, AssessmentScores, login_manager
 import pandas as pd
-#from db_util import user_class_data
+from db_util import *
 
 main = Blueprint('main', __name__, template_folder='main_templates')
-
 
 @main.route('/')
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for('main.profile'))
+        return redirect(url_for('main.profile', username = current_user.username))
     return render_template('index.html')
 
-@main.route('/profile')
+@main.route('/profile/<username>', methods=['GET'])
 @login_required
-def profile():
-    # user=current_user
-    # roster_df = pd.DataFrame()
+def profile(username):
+    if username != current_user.username:
+        abort(403)  # Optionally, handle unauthorized access
 
-    # #filter for current_user's class data
-    # if user.role_id > 0:
-    #     roster_df = user_class_data(user.staff_id, user.role_id)
-
-    # Render the profile page with the filtered roster
-    return render_template('profile.html', roster_df=roster_df, user=user)
+    rosters = fetch_all_rosters(current_user.staff_id)
+    rosters_by_class = group_rosters_by_class(rosters)
+    profile_url = url_for('main.profile', username = current_user.username)
+    return render_template('profile.html', rosters=rosters, profile_url = profile_url)
 
 # @app.route('/')
 # def home():

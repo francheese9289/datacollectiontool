@@ -2,7 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 import uuid 
 from werkzeug.security import generate_password_hash, check_password_hash
-import secrets
 
 
 db = SQLAlchemy()
@@ -75,21 +74,15 @@ class Staff(db.Model):
     last_name = db.Column(db.String(50), nullable=True, default='')
     staff_full_name = db.Column(db.String(150))
     email = db.Column(db.String(319), unique=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
     def __init__(self, staff_id, first_name, last_name, staff_full_name, email, role_id):
         self.staff_id = staff_id
         self.first_name = first_name
         self.last_name = last_name
-        self.staff_full_name = self.get_staff_full_name
+        self.staff_full_name = staff_full_name
         self.email = email
         self.role_id = role_id
-
-    def get_staff_full_name(self):
-        staff_full_name = (self.first_name + " " + self.last_name)
-        return staff_full_name
-
-  
 
 
 class User(db.Model, UserMixin):
@@ -258,20 +251,11 @@ class ClassroomSchoolYear(db.Model):
     year_id = db.Column(db.Integer, db.ForeignKey('year.id'))
     teacher_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'))
-    # students = db.relationship('Student', backref='classrooms', lazy=True, cascade='all, delete-orphan')
-    # assessment_scores = db.relationship('AssessmentScores', backref='classrooms', lazy=True, cascade='all, delete-orphan')
-
+  
     def __init__(self, classroom_id, year_id):
         self.classroom_id = classroom_id
         self.year_id = year_id
-    # #delete?
-    # def class_roster(self):
-    #     students = Student.query.filter_by(classrooms = self.classroom_id).all().unique() 
-    #     for student in students:
-    #         self.students.append(student)
-        
-    #     db.session.commit()
-       
+
 
 class ClassroomSchoolYearPeriod(db.Model):
     __tablename__='classroom_schoolyear_periods'
@@ -300,12 +284,8 @@ class Student(db.Model):
         self.id = id
         self.student_first = student_first
         self.student_last = student_last
-        self.student_full_name =self.full_student_names
-    
-    def full_student_names(self):
-        student_full_name = (self.student_first + " " + self.student_last)
-        return student_full_name
-        
+        self.student_full_name = student_full_name
+
 
 class StudentClasses(db.Model):
     '''Full roster of students for each classroom/schoolyear'''
@@ -322,16 +302,6 @@ class StudentClasses(db.Model):
 
     def __init__ (self, id):
         self.id = self
-
-
-# class ClassEnrollment(db.Model):
-#     __tablename__='class_rosters'
-#     id= db.Column(db.Integer, primary_key = True)
-#     staff_id = db.Column(db.Integer, db.ForeignKey('staff.staff_id'))
-#     classroom_schoolyear_id = db.Column( db.String(50), db.ForeignKey('classroom_schoolyears.id'))
-
-#     def __init__(self,id):
-#         self.id = id
 
 class Assessment(db.Model):
     '''general information about each assessment'''

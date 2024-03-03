@@ -3,99 +3,116 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="hero is-primary">
-    <div class="hero-body">
-      <div class="columns">
-        <div class="column is-12">
-          <div class="container content">
-            <i class="is-large fab fa-discord"></i>
-            <i class="is-large fas fa-code"></i>
-            <h1 class="title">Hello, {{ current_user.first_name }}!</h1>
-            <h3 class="subtitle">
-                {{ current_user.username }}'s Profile
-            </h3>
-            <a href="https://github.com/BulmaTemplates/bulma-templates" target="_blank" class="button is-primary is-large">
-              <span class="icon">
-                <i class="fab fa-github"></i>
-              </span>
-              <span>Github</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section class="section">
-    <div class="container">
-      <div class="columns">
-        <div class="column is-3">
-          <aside class="is-medium menu">
-        <p class="menu-label">
-          categories
-        </p>
-        <ul class="menu-list">
-          <li class="is-right"><a href="#const" class="is-active"><i class="fab fa-css3-alt"></i> CSS</a></li>
-          <li><a href="#let" class="is-active"><i class="fab fa-js"></i> JS</a></li>
-          <li><a href="#let" class="is-active"><i class="fab fa-html5"></i> HTML</a></li>
-        </ul>
-            <p class="menu-label">
-              More to read...
-            </p>
-            <ul class="menu-list"></ul>
-            <!-- {% for key,value in roster_df.iterrows() %}
-            <option value="{{ roster_df['ClassroomSchoolYear.id'] }}">{{ value['Classroom'] }}</option>
-              {% endfor %} -->
-              <!-- MAKE SEPARATE TEMPLATES TO NEST TABLES IN? -->
-            </ul>
-          </aside>
-        </div>
-        <div class="column is-9">
-          <div class="content is-medium">
-        <h3 class="title is-3">Snippets ¯\_(ツ)_/¯</h3>
-            <div class="box">
-              <h4 id="const" class="title is-3">const</h4>
-              <article class="message is-primary">
-                <span class="icon has-text-primary">
-                <i class="fab fa-js"></i>
-                </span>
-                <div class="message-body">
-                  Block-scoped. Cannot be re-assigned. Not immutable.
-                </div>
-              </article>
-            <pre><code class="language-javascript">const test = 'test';</code></pre>
-          </div>
-          <div class="box">
-            <h4 id="let" class="title is-3">let</h4>
-            <article class="message is-primary">
-              <span class="icon has-text-primary">
-                <i class="fas fa-info-circle"></i>
-              </span>
-              <div class="message-body">
-                Block-scoped. Can be re-assigned.
-              </div>
-            </article>
-          <pre><code class="language-javascript">let i = 0;</code></pre>
-        </div>
-        <h3 class="title is-3">More to Come...</h3>
-        <div class="box">
-          <h4 id="lorem" class="title is-4">So you want nice css scrollbar...</h4>
-          <article class="message is-primary">
-            <span class="icon has-text-primary">
-              <i class="fas fa-info-circle"></i>
-            </span>
-            <div class="message-body">
-              Lorem ipsum dolor sit amet, mea ne viderer veritus menandri, id scaevola gloriatur instructior sit.
-            </div>
-          </article>
-        <pre><code class="language-css">
-:root{
-::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-track{background:#efefef;border-radius:6px}::-webkit-scrollbar-thumb{background:#d5d5d5;border-radius:6px}::-webkit-scrollbar-thumb:hover{background:#c4c4c4}
-}
-    </code></pre>
-      </div>
+<style>
+  .bd-placeholder-img {
+    font-size: 1.125rem;
+    text-anchor: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  @media (min-width: 768px) {
+    .bd-placeholder-img-lg {
+      font-size: 3.5rem;
+    }
+  }
+
+  .b-example-divider {
+    width: 100%;
+    height: 3rem;
+    background-color: rgba(0, 0, 0, .1);
+    border: solid rgba(0, 0, 0, .15);
+    border-width: 1px 0;
+    box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+  }
+
+  .b-example-vr {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 100vh;
+  }
+
+  .bi {
+    vertical-align: -.125em;
+    fill: currentColor;
+   }
+
+  /* .nav-scroller {
+    position: relative;
+    z-index: 2;
+    height: 2.75rem;
+    overflow-y: hidden;
+  }
+
+  .nav-scroller .nav {
+    display: flex;
+    flex-wrap: nowrap;
+    padding-bottom: 1rem;
+    margin-top: -1px;
+    overflow-x: auto;
+    text-align: center;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  } */ 
+
+  .btn-bd-primary {
+    --bd-violet-bg: #712cf9;
+    --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+    --bs-btn-font-weight: 600;
+    --bs-btn-color: var(--bs-white);
+    --bs-btn-bg: var(--bd-violet-bg);
+    --bs-btn-border-color: var(--bd-violet-bg);
+    --bs-btn-hover-color: var(--bs-white);
+    --bs-btn-hover-bg: #6528e0;
+    --bs-btn-hover-border-color: #6528e0;
+    --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+    --bs-btn-active-color: var(--bs-btn-hover-color);
+    --bs-btn-active-bg: #5a23c8;
+    --bs-btn-active-border-color: #5a23c8;
+  }
+
+  .bd-mode-toggle {
+    z-index: 1500;
+  }
+
+  .bd-mode-toggle .dropdown-menu .active .bi {
+    display: block !important;
+  }
+</style>
+<div class="px-4 pt-5 my-5 text-center border-bottom">
+  <h1 class="display-4 fw-bold text-body-emphasis">Hello, {{ current_user.first_name }}!</h1>
+  <div class="col-lg-6 mx-auto">
+    <h2 class="lead mb-4">{{ current_user.username }}'s Profile</h2>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
+      <button type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Primary button</button>
+      <button type="button" class="btn btn-outline-secondary btn-lg px-4">Secondary</button>
     </div>
   </div>
 </div>
-</div>
-</section>
+
+<table class="table table-hover">
+  {% for roster in rosters_by_class %}
+  <thead>
+    <tr>
+      <th scope="col">Year ID</th>
+      <th scope="col">Class Name</th>
+      <th scope="col">Grade Level</th>
+      <th scope="col">Student Name</th>
+    </tr>
+    {% endfor %}
+  </thead>
+  <tbody>
+    {% for roster in rosters_by_class %}
+    <tr>
+      <td>{{ roster.year_id }}</td>
+      <td>{{ roster.class_sy_id }}</td>
+      <td>{{ roster.grade_level_id }}</td>
+      <td>{{ roster.student_full_name }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}
