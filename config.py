@@ -17,3 +17,8 @@ class Config():
     SQLALCHEMY_POOL_SIZE=20
     #max number of seconds each connection lives, adjust as needed
     SQLALCHEMY_POOL_RECYCLE = 300
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI')
+    WTF_CSRF_ENABLED = False

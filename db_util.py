@@ -3,11 +3,53 @@ import pandas as pd
 from flask_login import current_user
 from sqlalchemy import text
 
-def fetch_all_rosters(staff_id):
+
+
+def generate_profile_data(self):
+    '''Get user role and school association, associated classrooms, and class rosters(names of students in each class)'''
+    #dict to store user info, role & school
+    profile_data = {}
+    classrooms = {}
+    if current_user.is_staff_member & current_user.role_id == 2:
+        user_classrooms = db.session.query(
+            ClassroomSchoolYear).filter(
+                ClassroomSchoolYear.teacher_id == self.staff_id)
+        current_classroom = pd.DataFrame([uc for uc in user_classrooms]).sort_values('year_id', ascending=False)
+        classrooms.update(c for c in current_classroom)
+        cc = current_classroom[0]
+        id = current_user.username
+        profile_data[id] = {
+            'name': [f'{current_user.first_name} {current_user.last_name}'],
+            'school' : [cc.school_id]
+        }
+
+
+
+
+        # profile_data.update(i for i in current_classroom)
+        # for classroom in user_classrooms:
+        #     student_search = db.session.query(StudentClasses).filter(StudentClasses.class_sy_id == classroom.id).all()
+        #     students = pd.DataFrame([(ss.id, ss.student_id ) for ss in student_search])
+        #     student_names = pd.DataFrame(db.session.query(Student))
+        #     student_list = pd.merge(students,)
+
+
+
+
+
+
+
+
+def fetch_all_classes(staff_id):
     # Use SQLAlchemy to execute a raw SQL query on the view
-    query = text(f'SELECT * FROM v_detailed_rosters WHERE teacher_id={staff_id}')
-    rosters = db.session.execute(query).fetchall()
-    return rosters
+    # query = text(f'SELECT year_id FROM v_detailed_rosters WHERE teacher_id={staff_id}')
+    user_classes = db.session.query(ClassroomSchoolYear).filter(ClassroomSchoolYear.teacher_id == staff_id).order_by(ClassroomSchoolYear.year_id).all()
+
+    return user_classes
+    
+
+
+
 
 def group_rosters_by_class(rosters):
     rosters_by_class = {}

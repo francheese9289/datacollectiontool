@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 import uuid 
+import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -83,6 +84,10 @@ class Staff(db.Model):
         self.staff_full_name = staff_full_name
         self.email = email
         self.role_id = role_id
+    
+    def __repr__(self):
+        return f'<Staff Member: {self.staff_full_name}'
+
 
 
 class User(db.Model, UserMixin):
@@ -116,6 +121,9 @@ class User(db.Model, UserMixin):
         self.staff_id = user_staff_info['staff_id']
         self.role_id = user_staff_info['role_id']
         self.staff_member = user_staff_info['staff_member']
+
+    def __repr__(self):
+        return f'<User: {self.username}>'
 
     def create_username(self):
         print(f'create_username called with first_name: {self.first_name}, last_name: {self.last_name}') 
@@ -177,6 +185,26 @@ class User(db.Model, UserMixin):
                         'staff_member': False}
 
         return user_staff
+    
+    def generate_profile_data(self):
+        '''Get user role and school association, associated classrooms, and class rosters(names of students in each class)'''
+        #dict to store user info, role & school
+        profile_data = {}
+        classrooms = {}
+        if self.is_staff_member & self.role_id == 2:
+            user_classrooms = db.session.query(
+                ClassroomSchoolYear).filter(
+                    ClassroomSchoolYear.teacher_id == self.staff_id)
+            current_classroom = pd.DataFrame([uc for uc in user_classrooms]).sort_values('year_id', ascending=False)
+            classrooms.update(c for c in current_classroom)
+            cc = current_classroom[0]
+            id = self.username
+            profile_data[id] = {
+                'name': [f'{self.first_name} {self.last_name}'],
+                'school' : [cc.school_id]
+            }
+
+                
             
 class School(db.Model):
      '''Unique ids for each school in the WCSU'''
@@ -286,6 +314,9 @@ class Student(db.Model):
         self.student_last = student_last
         self.student_full_name = student_full_name
 
+    def get_classrooms(self):
+        classrooms = db.session.query(AssessmentScores).filter_by(AssessmentScores.student_id == self.id)
+        student_classes = pd.DataFrame
 
 class StudentClasses(db.Model):
     '''Full roster of students for each classroom/schoolyear'''
@@ -302,6 +333,11 @@ class StudentClasses(db.Model):
 
     def __init__ (self, id):
         self.id = self
+
+    # def class_roster(self):
+    #     df = pd.DataFrame([self.id,])
+    #     get_names = db.session.query(Student).filter(Student.id == self.student_id)
+    #     roster = pd.DataFrame([gn.student_last, gn.student_first] for gn in get_names)
 
 class Assessment(db.Model):
     '''general information about each assessment'''
@@ -356,3 +392,21 @@ class AssessmentScores(db.Model):
         self.classroom_schoolyear_period_id = classroom_schoolyear_period_id
         self.assessment_id = assessment_id
         self.student_id = student_id
+
+    #I have no clue if this will do anything... 
+    # def create_df(self):
+    #     score_data = db.session.query(AssessmentScores).all()
+    #     for score in score_data:
+    #         df = pd.DataFrame(s for s in score)
+    #         return df
+
+    # def associate_classroom(self):
+    #     test_classroom = db.session.query(
+    #         ClassroomSchoolYearPeriod.id == self.classroom_schoolyear_period_id).load_only(
+    #             ClassroomSchoolYearPeriod.classroom_schoolyear_id,
+    #             self.student_id
+    #         )
+    #     for classroom in test_classroom:
+    #         df = pd.DataFrame([c for c in classroom])
+    #         df_merge = pd.merge(df, self.create_df(), how = 'outer', on='classroom_schoolyear_period_id')
+    #         return df_merge

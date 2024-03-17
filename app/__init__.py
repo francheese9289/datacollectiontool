@@ -5,7 +5,6 @@ from config import Config
 from models import db, login_manager
 
 
-
 def init_app():
     '''Initialize Application'''
     app = Flask(__name__)

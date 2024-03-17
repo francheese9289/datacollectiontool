@@ -15,3 +15,6 @@ class UserRegistrationForm(FlaskForm):
     password = PasswordField('Password', validators = [DataRequired()])
     confirm_password = PasswordField('Confirm Password', 
         validators=[DataRequired(), EqualTo('password', message='Passwords Must Match')])
+
+class PARDataEntry(FlaskForm):
+    #is there where I would loop student names?
