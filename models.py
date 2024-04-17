@@ -1,13 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 import uuid 
-import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 
+###To insepect database tables use: psql postgresql://vydvbwqr:stgmpejxJhNPWLBWa9PL5JO39puT7k2H@salt.db.elephantsql.com/vydvbwqr
+##Can use SQL queries during inspection \dt \d \q
 
 class Permission: #Permission Constants - BITWISE
     '''Varying permission levels to be assigned individually or to Roles'''
@@ -23,8 +25,10 @@ class Role(db.Model):
     '''Associate permissions with roles, add and remove permissions from roles'''
     __tablename__ ='roles'
     id=db.Column(db.Integer, primary_key=True)
-    role_name = db.Column(db.String(150), nullable=False, default ='User')
+    role_name = db.Column(db.String(150), default ='User')
     permissions = db.Column(db.Integer)
+
+    # staff = db.relationship('Staff', back_populates='staff.role')
 
     def __repr__(self):
         return '<Role %r>' % self.permissions
@@ -51,6 +55,7 @@ class Role(db.Model):
     @staticmethod
     def insert_roles():
         roles = {
+            'Student':[Permission.STUDENT],
             'User':[Permission.PUBLIC],
             'Teacher':[Permission.STUDENT, Permission.CLASS],
             'Principal':[Permission.STUDENT, Permission.CLASS, Permission.GRADE, Permission.YOY],
@@ -70,64 +75,71 @@ class Role(db.Model):
 class Staff(db.Model):
     '''Checks Staff table for new user pre-assigned role, also can update and remove roles '''
     __tablename__ = 'staff'
-    staff_id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=True, default='')
-    last_name = db.Column(db.String(50), nullable=True, default='')
-    staff_full_name = db.Column(db.String(150))
-    email = db.Column(db.String(319), unique=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
-    def __init__(self, staff_id, first_name, last_name, staff_full_name, email, role_id):
+    staff_id = db.Column(db.Integer, primary_key=True)
+    staff_name = db.Column(db.String(150))
+    staff_email = db.Column(db.String(319), unique=True)
+    role = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+    #back ref for users > staff members
+    staff_user = db.relationship('User', back_populates='staff_id')
+
+    #back ref for classrooms > staff members
+    classrooms = db.relationship('Classroom', back_populate='teacher_id', lazy='dynamic')
+
+    def __init__(self, staff_id, staff_name, staff_email, role):
         self.staff_id = staff_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.staff_full_name = staff_full_name
-        self.email = email
-        self.role_id = role_id
+        self.staff_name = staff_name
+        self.staff_email = staff_email
+        self.role = role
     
     def __repr__(self):
-        return f'<Staff Member: {self.staff_full_name}'
+        return f'<Staff Member: {self.staff_name}>'
 
 
 
 class User(db.Model, UserMixin):
     '''Creates user accounts and stores user info'''
-
     __tablename__ ='users'
 
     user_id = db.Column(db.String, primary_key=True)
-    email = db.Column(db.String(319), nullable = False)
-    first_name = db.Column(db.String(150), nullable=True, default='')
-    last_name = db.Column(db.String(150), nullable = True, default = '')
+    user_email = db.Column(db.String(50), nullable = False)
+    user_first_name = db.Column(db.String(150), nullable=True, default='')
+    user_last_name = db.Column(db.String(150), nullable = True, default = '')
     username = db.Column(db.String(150), unique = True, nullable = False)
-    password = db.Column(db.String, nullable = True, default = '')
+    user_password = db.Column(db.String, nullable = True, default = '')
     staff_member = db.Column(db.Boolean, default = False)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff.staff_id'))
 
+    staff_id = db.relationship('Staff', back_populates = 'staff_user')
 
-    def __init__(self, email, first_name, last_name, password, role_id=1, staff_id=0):
-        print(f'Init called with email: {email}, first_name: {first_name}, last_name: {last_name}') 
+    #back ref for users > classrooms
+    user_classrooms = db.relationship('Classroom', backref='user_id', lazy='dynamic')
+    # user_role = db.relationship('Staff', back_populates = 'user_id')
+    # primaryjoin ="and_(Staff.staff_id == foreign(User.staff_id),""Staff.role == User.user_role)
+
+    def __init__(self, user_email, user_first_name, user_last_name, user_password):
+        print(f'Init called with email: {user_email}, first_name: {user_first_name}, last_name: {user_last_name}') 
         
         self.user_id = self.set_id()
-        self.email = email
-        self.first_name = first_name
-        self.last_name = last_name
-        print(f'Before create_username: {self.first_name}, {self.last_name}') 
-        self.password = self.set_password(password) if password else ''
+        self.user_email = user_email
+        self.user_first_name = user_first_name
+        self.user_last_name = user_last_name
+
+        print(f'Before create_username: {self.user_first_name}, {self.user_last_name}') 
+        self.user_password = self.set_password(user_password) if user_password else ''
         self.username = self.create_username()
+
         print(f'After create_username: {self.username}')
-        user_staff_info = self.is_staff_member(email)
+        user_staff_info = self.is_staff_member(user_email)
         self.staff_id = user_staff_info['staff_id']
-        self.role_id = user_staff_info['role_id']
         self.staff_member = user_staff_info['staff_member']
 
     def __repr__(self):
         return f'<User: {self.username}>'
 
     def create_username(self):
-        print(f'create_username called with first_name: {self.first_name}, last_name: {self.last_name}') 
-        base_username = (self.first_name[0] + self.last_name).lower()
+        print(f'create_username called with first_name: {self.user_first_name}, last_name: {self.user_last_name}') 
+        base_username = (self.user_first_name[0] + self.user_last_name).lower()
         username = base_username
         suffix = 1
         while User.query.filter_by(username=username).first() is not None:
@@ -157,7 +169,6 @@ class User(db.Model, UserMixin):
     def set_password(self, password):
         self.password = generate_password_hash(password, method='pbkdf2:sha256')
 
-
     def check_password(self, password):
         return check_password_hash(self.password, password)
     
@@ -172,10 +183,10 @@ class User(db.Model, UserMixin):
 
     #checks to see if user is staff member when creating an account
     def is_staff_member(self,email):
-        staff_member = Staff.query.filter_by(email=email).with_entities(Staff.role_id, Staff.staff_id).first()
+        staff_member = Staff.query.filter_by(email=email).with_entities(Staff.role, Staff.staff_id).first()
         if staff_member:
             staff_id = staff_member.staff_id
-            role_id = staff_member.role_id
+            role_id = staff_member.role
             user_staff= {'staff_id':staff_id,
                          'role_id': role_id,
                          'staff_member': True}
@@ -185,228 +196,98 @@ class User(db.Model, UserMixin):
                         'staff_member': False}
 
         return user_staff
-    
-    def generate_profile_data(self):
-        '''Get user role and school association, associated classrooms, and class rosters(names of students in each class)'''
-        #dict to store user info, role & school
-        profile_data = {}
-        classrooms = {}
-        if self.is_staff_member & self.role_id == 2:
-            user_classrooms = db.session.query(
-                ClassroomSchoolYear).filter(
-                    ClassroomSchoolYear.teacher_id == self.staff_id)
-            current_classroom = pd.DataFrame([uc for uc in user_classrooms]).sort_values('year_id', ascending=False)
-            classrooms.update(c for c in current_classroom)
-            cc = current_classroom[0]
-            id = self.username
-            profile_data[id] = {
-                'name': [f'{self.first_name} {self.last_name}'],
-                'school' : [cc.school_id]
-            }
 
-                
-            
-class School(db.Model):
-     '''Unique ids for each school in the WCSU'''
-     __tablename__ = 'schools'
-     id = db.Column(db.String(10), primary_key=True)
-     name = db.Column(db.String(30), unique=True, nullable=False)
-     short_name = db.Column(db.String(), unique=True, nullable=False)
-    
-     def __init__(self, id, name, short_name):
-         self.id = id
-         self.name = name
-         self.short_name = short_name
-
-     def __repr__(self):
-        return '<School %r>' % self.name
-
-class Year(db.Model):
-    '''Year table to separate instances of classes and students over years'''
-    __tablename__='years'
-    id = db.Column(db.Integer, primary_key=True)
-    start_date = db.Column(db.Date, nullable=True)
-    end_date = db.Column(db.Date, nullable=True)
-
-
-    def __init__(self, id, start_date, end_date):
-        self.year_id = id
-        self.start_date = start_date
-        self.end_date = end_date
-
-class GradeLevel (db.Model):
-    '''School grade levels -1 (PK) to 12'''
-    __tablename__= 'grade_levels'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)    
-
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-
-class Period (db.Model): 
-    __tablename__='periods'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100),unique=True, nullable=False)
-
-class SchoolYear(db.Model):
-    '''Associate school years with schools, prinicpals and superintendents'''
-    __tablename__='school_years'
-    id = db.Column(db.String(100), primary_key = True)
-    school_id = db.Column(db.String(10), db.ForeignKey('schools.id'))
-    year_id = db.Column(db.Integer, db.ForeignKey('years.id'))
-    principal_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
-    super_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
 
 class Classroom(db.Model):
-    '''Creates a table for each classroom in a school '''
-    __tablename__ = 'classrooms'
-    id = db.Column(db.String(50), primary_key = True)
-    subject = db.Column(db.String(150), nullable = True)
-    school_id = db.Column(db.String(50), db.ForeignKey('schools.id'))
-    grade_level_id = db.Column(db.Integer, db.ForeignKey('grade_levels.id'))
-
-    def __init__(self, id, subject):
-        self.id = id
-        self.subject = subject
-
-class ClassroomSchoolYear(db.Model):
     '''Classroom associates grade level, school and year with their teachers
     to assure student privacy and specificity of access'''
-    __tablename__ = 'classroom_schoolyears'
-    id = db.Column(db.String(150), primary_key=True)
-    classroom_id = db.Column(db.String(50), db.ForeignKey('classrooms.id'))
-    year_id = db.Column(db.Integer, db.ForeignKey('year.id'))
-    teacher_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
-    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'))
-  
-    def __init__(self, classroom_id, year_id):
+    __tablename__ = 'classrooms'
+    #CHILD CLASS to staff
+    classroom_id = db.Column(db.String(150), primary_key=True)
+    school_year = db.Column(db.Integer)
+    school_name = db.Column(db.String(150))
+    teacher_id = db.Column(db.Integer, db.ForeignKey('staff.staff_id')) 
+    user_id = db.Column(db.Integer, db.ForeignKey ('user.user_id'))
+
+    #for student_classes association table
+    staff = db.relationship('Staff', back_populates='classrooms')
+    
+    def __init__(self, classroom_id, school_year, school_name, teacher_id, user_id):
         self.classroom_id = classroom_id
-        self.year_id = year_id
-
-
-class ClassroomSchoolYearPeriod(db.Model):
-    __tablename__='classroom_schoolyear_periods'
-    id = db.Column(db.String(100), primary_key=True)
-    period = db.Column(db.Integer, db.ForeignKey('periods.id'))
-    classroom_schoolyear_id = db.Column(db.String(50),db.ForeignKey('classroom_schoolyears.id'))
-
-    def __init__(self):
-        self.id = self
+        self.school_year = school_year
+        self.school_name = school_name
+        self.teacher_id = teacher_id
+        self.user_id = user_id
 
 class Student(db.Model):
     __tablename__ = 'students'
-    id = db.Column(db.Integer, primary_key = True)
-    student_first = db.Column(db.String(100))
-    student_last = db.Column(db.String(100))
-    student_full_name = db.Column(db.String(150))
-    classes = db.relationship(
-        'StudentClasses',
-        backref=db.backref('students', lazy=True)
-    )
 
-    scores = db.relationship('AssessmentScores', 
-                             backref = db.backref('students',lazy=True))
+    student_id = db.Column(db.Integer, primary_key = True)
+    student_name = db.Column(db.String(150))
+    student_email = db.Column(db.String(150))
+    role = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
-    def __init__(self, id, student_first, student_last, student_full_name):
-        self.id = id
-        self.student_first = student_first
-        self.student_last = student_last
-        self.student_full_name = student_full_name
+    #for student_classes association table
+    student_classes = db.relationship('StudentClass', back_populates='student_id', lazy='dynamic')
+    
+    def __init__(self, student_id, student_name, student_email, role):
+        self.student_id = student_id
+        self.student_name = student_name
+        self.student_email = student_email
+        self.role = role
 
-    def get_classrooms(self):
-        classrooms = db.session.query(AssessmentScores).filter_by(AssessmentScores.student_id == self.id)
-        student_classes = pd.DataFrame
-
-class StudentClasses(db.Model):
-    '''Full roster of students for each classroom/schoolyear'''
-    #wondering if I should rethink these associations. IRL I'd be connected to an SIS,
-    #for this table I made a join in dbeaver between classrooms & students through the assessment table
-    #almost wonder if classroom schoolyear and classroom school year period should be an 
-    #instance of the classroom class?
-    #wrote out logic in thoughts.txt - this might be enough for this project however.
+class StudentClass(db.Model):
+    '''Association table for students and classrooms'''
     __tablename__='student_classes'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer,db.ForeignKey('students.id'))
-    class_sy_p_id = db.Column(db.String(50), db.ForeignKey('classroom_schoolyear_periods.id'))
-    class_sy_id = db.Column(db.String(50), db.ForeignKey('classroom_schoolyears.id'))
+    student_class_id = db.Column(db.String(50), primary_key=True)
+    student_id = db.Column(db.Integer,db.ForeignKey('students.student_id'))
+    classroom_id = db.Column(db.String(150), db.ForeignKey('classrooms.classroom_id'))
 
-    def __init__ (self, id):
-        self.id = self
+    student_class_scores = db.relationship('AssessmentScore', back_populates='student_class_id', lazy='dynamic')
 
-    # def class_roster(self):
-    #     df = pd.DataFrame([self.id,])
-    #     get_names = db.session.query(Student).filter(Student.id == self.student_id)
-    #     roster = pd.DataFrame([gn.student_last, gn.student_first] for gn in get_names)
+    def __init__ (self, student_class_id):
+        self.student_class_id = student_class_id
 
-class Assessment(db.Model):
-    '''general information about each assessment'''
-    __tablename__='assessment_details'
-    id = db.Column(db.String(25),primary_key = True)
-    name = db.Column(db.String(100), unique = True, nullable = False)	
-    short_name = db.Column(db.String(10), unique = True, nullable = False)	
-    family = db.Column(db.String(100))
-    type = db.Column(db.String(100))	
-    subject = db.Column(db.String(100))	
-    content_standard = db.Column(db.String(100))
-
-    def __init__(self, id, name, short_name, family, type, subject, content_standard):
-        self.id = id
-        self.name = name
-        self.short_name = short_name
-        self.family = family
-        self.type = type
-        self.subject = subject
-        self.content_standard = content_standard
+    #def add_new_classes(): naming convention
 
 class AssessmentStandard(db.Model):
-    '''Benchmark scores for tier 1, 2, 3'''
+    '''general information about each assessment'''
     __tablename__='assessment_standards'
-    id = db.Column(db.Integer, primary_key = True)
-    rank = db.Column(db.Integer)
-    rank_score = db.Column(db.Float(5,2))	
-    assessment_id = db.Column(db.String(25), db.ForeignKey('assessments.id'))
-    period_id = db.Column(db.Integer, db.ForeignKey('periods.id'))	
-    grade_level_id = db.Column(db.Integer, db.ForeignKey('grade_levels.id'))
+    standard_id = db.Column(db.Integer, primary_key = True)
+    component_id = db.Column(db.String(10))
+    subject = db.Column(db.String(50))	
+    component_name = db.Column(db.String(50))	
+    assessment_name = db.Column(db.String(150))	
+    grade_level = db.Column(db.Integer)
+    period = db.Column(db.Integer)
+    rank_name = db.Column(db.String(10))
+    rank_score = db.Column(db.Integer)
 
-    def __init__(self, id, rank, rank_score, assessment_id, period_id, grade_level_id):
-        self.id = id
-        self.rank = rank
+    assessment_standard_scores = db.relationship('AssessmentScore', back_populates='standard_id', lazy='dynamic')
+
+    def __init__(self, standard_id, component_id, subject, component_name, assessment_name, grade_level, period, rank_name, rank_score):
+        self.standard_id = standard_id
+        self.component_id = component_id
+        self.subject = subject
+        self.component_name = component_name
+        self.assesment_name = assessment_name
+        self.grade_level = grade_level
+        self.period = period
+        self.rank_name = rank_name
         self.rank_score = rank_score
-        self.assessment_id = assessment_id
-        self.period_id = period_id
-        self.grade_level_id = grade_level_id
 
-class AssessmentScores(db.Model):
+
+class AssessmentScore(db.Model):
     '''Student assessment scores'''
-    __tablename__ = 'student_assessment_scores'
-    id = db.Column(db.String, primary_key=True)
-    student_score = db.Column(db.Float(5,2))
-    classroom_schoolyear_period_id = db.Column(db.String(100), db.ForeignKey('classroom_schoolyear_period.id'))
-    assessment_id = db.Column(db.String(25), db.ForeignKey('assessments.id') )
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    __tablename__ = 'assessment_scores'
+    assessment_score_id = db.Column(db.String, primary_key=True)
+    student_score = db.Column(db.Integer)
+    standard_id = db.Column(db.String(50), db.ForeignKey('assessment_standards.standard_id') )
+    student_class_id = db.Column(db.Integer, db.ForeignKey('student_classes.student_class_id'))
+    
 
-    def __init__(self, id, student_score, classroom_schoolyear_period_id, assessment_id, student_id):
-        self.id = id
+    def __init__(self, assessment_score_id, student_score, standard_id, student_class_id):
+        self.assessment_score_id = assessment_score_id
         self.student_score = student_score
-        self.classroom_schoolyear_period_id = classroom_schoolyear_period_id
-        self.assessment_id = assessment_id
-        self.student_id = student_id
-
-    #I have no clue if this will do anything... 
-    # def create_df(self):
-    #     score_data = db.session.query(AssessmentScores).all()
-    #     for score in score_data:
-    #         df = pd.DataFrame(s for s in score)
-    #         return df
-
-    # def associate_classroom(self):
-    #     test_classroom = db.session.query(
-    #         ClassroomSchoolYearPeriod.id == self.classroom_schoolyear_period_id).load_only(
-    #             ClassroomSchoolYearPeriod.classroom_schoolyear_id,
-    #             self.student_id
-    #         )
-    #     for classroom in test_classroom:
-    #         df = pd.DataFrame([c for c in classroom])
-    #         df_merge = pd.merge(df, self.create_df(), how = 'outer', on='classroom_schoolyear_period_id')
-    #         return df_merge
+        self.standard_id = standard_id
+        self.student_class_id = student_class_id

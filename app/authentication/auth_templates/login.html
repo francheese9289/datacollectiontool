@@ -6,19 +6,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login Page</title>
-  <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
-    integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     <!-- Poppins font import -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-    <!-- Bootstrap css -->
-  <link rel="stylesheet" href='../static/css/bootstrap.min.css' />
-  <!-- Bootswatch css -->
-  <link rel="stylesheet" href='../static/css/bootstrap-theme.min.css' />
-  <!-- Bootstrap data tables -->
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.css">
-  <!-- Bootstrap JS -->
-  <script src="../static/js/bootstrap.bundle.min.js"></script>
-
+    <!-- Bulma css -->
+  <link rel="stylesheet" href='../static/css/bulma.min.css' />
 <style>
   * {
     font-family: 'Poppins', sans-serif;
@@ -78,7 +69,7 @@
             </div>
           </div>
           <br />
-          <button class="button is-block is-fullwidth is-dark is-medium" type="submit">
+          <button class="button is-block is-fullwidth is-dark is-medium" type="submit" href="{{ url_for('main.profile',username=current_user.username) }}">
             Login 
           </button>
         </form>

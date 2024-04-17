@@ -40,9 +40,13 @@ def init_app():
         app.register_blueprint(auth)
         app.register_blueprint(api)
 
-        # dash app
-        from .app_dash.dashboard import init_admin_dashboard
-        init_admin_dashboard(app)
-        
-
     return app
+
+
+
+app = init_app()
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0')
+
+app

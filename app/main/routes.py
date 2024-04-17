@@ -1,8 +1,7 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session, abort
+from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session, abort, jsonify
 from flask_login import login_required, current_user
-from models import db, User, Student, AssessmentScores, login_manager
-import pandas as pd
-from db_util import *
+from models import db, User
+from queries import *
 
 main = Blueprint('main', __name__, template_folder='main_templates')
 
@@ -10,16 +9,19 @@ main = Blueprint('main', __name__, template_folder='main_templates')
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('main.profile', username = current_user.username))
-    return render_template('index.html')
+    else:
+        return render_template('index.html')
 
 
 @main.route('/profile/<username>', methods=['GET'])
 @login_required
 def profile(username):
-    if username != current_user.username:
-        abort(403)  
-
-    user_classes = fetch_all_classes(current_user.staff_id)
-    # rosters_by_class = group_rosters_by_class(rosters)
-    profile_url = url_for('main.profile', username = current_user.username)
-    return render_template('profile.html', user_classes=user_classes, profile_url = profile_url)
+     '''
+     Generate url end point by fetching logged in user's username.
+     Populate profile with user/teacher's classrooms. 
+     '''
+     profile = User.query.filter_by(username=username).first()
+     user_classes = Classroom.query.filter_by(teacher_id=current_user.staff_id).all()
+    #  user_classrooms = current_user.follow_classrooms() 
+     
+     return render_template('profile.html', profile=profile, user_classrooms=user_classes)

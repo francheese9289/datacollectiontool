@@ -1,71 +1,76 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head><script src="../static/js/color-modes.js"></script>
+
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home</title>
-  <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
-    integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-    <!-- Poppins font import -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-    <!-- Bootstrap css -->
-  <link rel="stylesheet" href='../static/css/bootstrap.min.css' />
-  <!-- Bootswatch css -->
-  <link rel="stylesheet" href='../static/css/bootstrap-theme.min.css' />
-  <!-- Bootstrap data tables -->
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.css">
-  <!-- Bootstrap JS -->
-  <script src="../static/js/bootstrap.bundle.min.js"></script>
+  <title>Document</title>
+  <link rel="stylesheet" href="../static/css/bulma.min.css">
+  <link rel="stylesheet" href="../static/bulma.sass">
+  <link rel="stylesheet" href="../static/sass/base/_all.sass">
+  <!-- Poppins font import -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">>
+  <style>
+  @media(max-width: 500px) {
+      .reverse-columns {
+        flex-direction: column-reverse;
+        display: flex;
+      }
+    }
+
+    .titled {
+      font-family: 'Poppins', serif !important;
+      font-size: 58px !important;
+      font-weight: 400 !important;
+      line-height: 64px !important;
+    }
+
+    .subtitled {
+      font-family: 'Poppins', serif !important;
+      font-size: 22px !important;
+      font-weight: 400 !important;
+      line-height: 36px !important;
+    }
+  </style>
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="#">DCT</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarColor01">
-            <ul class="navbar-nav me-auto">
-              <li class="nav-item">
-                <a class="nav-link active" href="{{ url_for('main.index') }}">Home</a>
-                  <span class="visually-hidden">(current)</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{{ profile_url }}">Profile</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/dash/">Dashboard</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Dropdown</a>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" href="#">Action</a>
-                  <a class="dropdown-item" href="#">Another action</a>
-                  <a class="dropdown-item" href="#">Something else here</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Separated link</a>
-                </div>
-              </li>
-            </ul>
-            <form class="d-flex">
-              <input class="form-control me-sm-2" type="search" placeholder="Search">
-              <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
-            </form>
-          </div>
-        </div>
-      </nav>
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="#">
+        <img src="#" width="112" height="28">
+      </a>
+    </div>
+
+    <div class="navbar-menu">
+
+      <div class="navbar-end">
+        <a class="navbar-item">
+          Data Entry
+        </a>
+        <a class="navbar-item">
+          Insights
+        </a>
+        {% if current_user.is_authenticated %}
+        <a class="navbar-item" href="{{ url_for('main.profile', username=current_user.username) }}">
+          Profile
+        </a>
+        <a class="navbar-item" href="{{ url_for('auth.logout') }}">
+          Logout
+        </a>
+        {% else %}
+        <a class="navbar-item" href="{{ url_for('main.index') }}">
+          Login
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+</head>
    
   {% block content %}
   {% endblock %}
-  </div>
-  <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
-  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.js"></script>
-  {% block scripts %}{% endblock %}
+
   </body>
 </html>
