@@ -30,13 +30,14 @@ class Permission: #Permission Constants - BITWISE
 class Role(db.Model):
     '''Associate permissions with roles, add and remove permissions from roles'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    role_name: so.Mapped[str] = so.mapped_column(sa.String(50), index=True, default='Public')
+    name: so.Mapped[str] = so.mapped_column(sa.String(50), index=True, default='Public')
     permissions: so.Mapped[int] = so.mapped_column(sa.Integer)
 
-    #define collection of Staff objects related to each role
+    #<Relationships>
     staff_role: so.WriteOnlyMapped['Staff'] = so.relationship(
         back_populates='role_id')
-
+        #WriteOnlyMapped defines collection of Staff objects related to each role
+    
     def __repr__(self):
         return '<Role %r>' % self.permissions
 
@@ -45,7 +46,6 @@ class Role(db.Model):
         if self.permissions is None:
             self.permissions = 0
 
-    #perm for permissions
     def add_permission(self, perm):
         if not self.has_permission(perm):
             self.permissions += perm
@@ -77,108 +77,40 @@ class Role(db.Model):
             role.permissions = roles[r]
             db.session.add(role)
         db.session.commit()
-
+   
 
 class Staff(db.Model):
     '''Checks Staff table for new user pre-assigned role, also can update and remove roles '''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    name: so.Mapped[str] = so.mapped_column(sa.String(150), index=True)
+    full_name: so.Mapped[str] = so.mapped_column(sa.String(150), index=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(150), unique=True)
     role_id: so.Mapped[int] =  so.mapped_column(sa.ForeignKey(Role.id)) 
-    
-    #WriteOnlyMapped defines staff_classrooms as a collection w. Classroom objects inside
-    classrooms: so.WriteOnlyMapped['Classroom'] = so.relationship(back_populates='teacher') 
-    user: so.WriteOnlyMapped['User'] = so.relationship(back_populates='staff')
 
     def __repr__(self):
-        return f'<Staff Member: {self.staff_name}>'
+        return '<Staff Member {}>'.format(self.full_name)
+   
 
 
 class User(db.Model, UserMixin):
     '''Creates user accounts and stores user info'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    username: so.Mapped[str] = so.mapped_column(sa.String(150), index = True, unique=True)
-    email: so.Mapped[str] = so.mapped_column(sa.String(50), index=True)
-    first_name: so.Mapped[str] = so.mapped_column(sa.String(150), index=True, unique=True)
-    last_name: so.Mapped[str] = so.mapped_column(sa.String(150), index=True, unique=True)
-    password_hash = so.Mapped[str] = so.mapped_column(sa.String(50), index=True, unique=True)
+    username: so.Mapped[str] = so.mapped_column(sa.String(150),
+                                                index = True, unique=True)
+    email: so.Mapped[str] = so.mapped_column(sa.String(50),
+                                             index=True)
+    first_name: so.Mapped[str] = so.mapped_column(sa.String(150),
+                                                  index=True, unique=True)
+    last_name: so.Mapped[str] = so.mapped_column(sa.String(150),
+                                                 index=True, unique=True)
+    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256),
+                                                               index=True, unique=True)
     staff_member: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean) #do I need this?
-    staff_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(Staff.id))
-
-    staff: so.WriteOnlyMapped[Staff] = so.relationship(back_populates='user')
-    classrooms: so.WriteOnlyMapped['Classroom'] = so.relationship(back_populates='user_id')
+    staff_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(
+        Staff.id))
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
-
-    def __repr__(self):
-        return f'<User: {self.username}>'
-
-    def create_username(self):
-        print(f'create_username called with first_name: {self.first_name}, last_name: {self.last_name}') 
-        base_username = (self.first_name[0] + self.last_name).lower()
-        username = base_username
-        suffix = 1
-        while User.query.filter_by(username=username).first() is not None:
-            username = f"{base_username}{suffix}"
-            suffix += 1
-        self.username = username
-        return username
-
-    def __repr__(self):
-        return '<User %r>' % self.username
-
-    def set_id(self):
-        return str(uuid.uuid4())
-    
-    def get_id(self):
-        return str(self.id)
-    
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    def set_password_hash(self, password):
-        '''password_hash hash- alias of user password_hash to store in db'''
-        self.password_hash = generate_password_hash(password)
-
-    def check_password_hash(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    @login_manager.user_loader
-    def load_user(id):
-        return db.session.get(User, int(id))
-    
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return not self.is_authenticated()
-
-    #checks to see if user is staff member when creating an account
-    def is_staff_member(self, email):
-        staff_member = Staff.query.filter_by(email=email).with_entities(Staff.role_id, Staff.id).first()
-        if staff_member:
-            staff_id = staff_member.id
-            role_id = staff_member.role_id
-            staff_user= {'staff_id':staff_id,
-                         'role_id': role_id,
-                         'staff_member': True}
-        else:
-            staff_user={'staff_id':0,
-                        'role_id':1,
-                        'staff_member': False}
-
-        return staff_user
-    
-   #look at sqla docs, may be an updated version of query and filter
+   
 
 
 class Classroom(db.Model):
@@ -187,33 +119,25 @@ class Classroom(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     school_year: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     school_name: so.Mapped[int] = so.mapped_column(sa.String(150))
+    grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
     teacher_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Staff.id))
     
-    teacher: so.Mapped[Staff] = so.relationship(back_populates='classrooms')
-    user_id: so.Mapped[User] = so.mapped_column(sa.Integer, index=True)
-
+    def __repr__(self):
+        return '<Clasroom {}>'.format(self.id)
 
 class Student(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     full_name: so.Mapped[int] = so.mapped_column(sa.String(150))
     email: so.Mapped[Optional[int]] = so.mapped_column(sa.String(150))
-    #future>include student_users?
 
-    #for student_classes association table
-    student_classes: so.WriteOnlyMapped['Classroom'] = so.relationship(
-        back_populates='id')
+    def __repr__(self):
+        return '<Student {}>'.format(self.full_name)
 
 # A common reason to create a table directly is when defining many to many relationships. 
 # The association table doesn’t need its own model class, as it will be accessed through the relevant 
 # relationship attributes on the related models.
 
-student_classes = sa.Table(
-    "student_classes",
-    sa.Column('id', sa.Integer, sa.ForeignKey('student.id'),
-              primary_key=True),
-    sa.Column('id', sa.Integer, sa.ForeignKey('classroom.id'),
-              primary_key=True)
-)
+
 
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
@@ -224,30 +148,20 @@ class AssessmentStandard(db.Model):
     assessment_name: so.Mapped[str] = so.mapped_column(sa.String(100))
     grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
     period: so.Mapped[int] = so.mapped_column(sa.Integer)
-    rank: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50))
-    rank_score: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+    tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50))
+    tier_benchmark: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
 
-    score_standard: so.WriteOnlyMapped['AssessmentScore'] = so.relationship(
-        back_populates='id')
-    
+    def __repr__(self):
+        return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
     
-    assessment_id: so.Mapped[int] = so.relationship(sa.ForeignKey(AssessmentStandard.id))
-    student_class_id: so.Mapped[int] = so.relationship(sa.ForeignKey(student_classes))
     
-
-    
-    #following: so.WriteOnlyMapped['User'] = so.relationship(
-    #     secondary=followers, primaryjoin=(followers.c.follower_id == id),
-    #     secondaryjoin=(followers.c.followed_id == id),
-    #     back_populates='followers')
-    #followers: so.WriteOnlyMapped['User'] = so.relationship(
-    #     secondary=followers, primaryjoin=(followers.c.followed_id == id),
-    #     secondaryjoin=(followers.c.follower_id == id),
-    #     back_populates='following')
+    def __repr__(self):
+        return '<Score {}: {}>'.format(self.student_score)
+   
 
     
