@@ -16,6 +16,7 @@ def init_app():
     db.init_app(app) 
     login_manager.init_app(app)
 
+
     #database connection
     migrate = Migrate(app, db)
     CORS(app)

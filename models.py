@@ -33,8 +33,8 @@ class Role(db.Model):
     permissions: so.Mapped[int] = so.mapped_column(sa.Integer)
 
     #RELATIONSHIPS
-    staff_role: so.WriteOnlyMapped['Staff'] = so.relationship(
-        back_populates='role_id')
+    staff_role: so.WriteOnlyMapped['Staff'] = so.relationship()
+    # student_role: so.WriteOnlyMapped['Student'] = so.relationship()
         #WriteOnlyMapped defines collection of Staff objects related to each role
     
     def __repr__(self):
@@ -69,11 +69,11 @@ class Role(db.Model):
             'Admin':[Permission.STUDENT, Permission.CLASS, Permission.GRADE, Permission.DISTRICT, Permission.YOY]
         }
         
-        for r in roles:
-            role = Role.query.get(r)
+        for role_name, permissions in roles.items():
+            role = Role.query.filter_by(name=role_name).first()
             if role is None:
-                role = Role(role_name=r)
-            role.permissions = roles[r]
+                role = Role(name=role_name)
+            role.permissions = sum(permissions)
             db.session.add(role)
         db.session.commit()
    
@@ -89,7 +89,7 @@ class Staff(db.Model):
     staff_classrooms: so.WriteOnlyMapped[List['Classroom']] = so.relationship() 
     #WriteOnlyMapped defines staff_classrooms as a collection w. Classroom objects inside
     '''Might need to create function for appending classrooms https://docs.sqlalchemy.org/en/20/tutorial/orm_related_objects.html#tutorial-select-relationships'''
-    staff_user: so.WriteOnlyMapped['User'] = so.relationship(back_populates='user_staff')
+    # user_id: so.WriteOnlyMapped['User'] = so.relationship(back_populates='staff_id')
 
     def __repr__(self):
         return '<Staff Member {}>'.format(self.full_name)
@@ -114,8 +114,7 @@ class User(db.Model, UserMixin):
         Staff.id))
     
     #RELATIONSHIPS
-    user_staff: so.WriteOnlyMapped[Staff] = so.relationship(back_populates='staff_user', single_parent=True)
-    user_classrooms: so.WriteOnlyMapped[List['Classroom']] = so.relationship(back_populates='user_id')
+    # user_classrooms: so.WriteOnlyMapped[List['Classroom']] = so.relationship(back_populates='user_id')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -186,16 +185,17 @@ def load_user(id):
 class Classroom(db.Model):
     '''Classroom associates grade level, school and year with their teachers
     to assure student privacy and specificity of access'''
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    id: so.Mapped[str] = so.mapped_column(primary_key=True)
     school_year: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     school_name: so.Mapped[int] = so.mapped_column(sa.String(150))
     grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
     teacher_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Staff.id))
     
     #RELATIONSHIPS 
-    user_id: so.Mapped[User] = so.relationship(back_populates='user_classrooms')
+    # teacher_user_id: so.WriteOnlyMapped[Staff] = so.relationship(primaryjoin="and_(User.id==Staff.user_id)")
     class_students: so.WriteOnlyMapped[List['StudentClassroomAssociation']] = so.relationship(
         back_populates='student_class')
+    class_scores: so.WriteOnlyMapped[Optional[List['AssessmentScore']]] = so.relationship()
 
 
     def __repr__(self):
@@ -216,16 +216,12 @@ class Student(db.Model):
 
 class StudentClassroomAssociation(db.Model):
     '''Association Object connecting Classrooms & Students'''
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('student.id'))
-    classroom_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('classroom.id'))
-    
+    student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('student.id'), primary_key=True)
+    classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey('classroom.id'), primary_key=True)
+
     class_student: so.Mapped['Student'] = so.relationship(back_populates='student_classes')
     student_class: so.Mapped['Classroom'] = so.relationship(back_populates='class_students')
-    class_scores: so.Mapped['AssessmentScore'] = so.relationship()
-    #each score has one student/class and each student class has a list of scores,
-    #connected by foreign key in score table
-    # student_class_scores: so.WriteOnlyMapped[List['AssessmentScore']] = so.relationship(back_populates='student_class_id')
+    
 
     def __repr__(self):
         return '<Student:{}, Class:{}>'.format(self.student_id, self.classroom_id)
@@ -234,7 +230,7 @@ class StudentClassroomAssociation(db.Model):
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    component_id: so.Mapped[str] = so.mapped_column(sa.String(15), unique=True)
+    component_id: so.Mapped[str] = so.mapped_column(sa.String(15))
     subject: so.Mapped[str] = so.mapped_column(sa.String(50))
     component_name: so.Mapped[str] = so.mapped_column(sa.String(100))
     assessment_name: so.Mapped[str] = so.mapped_column(sa.String(100))
@@ -244,7 +240,7 @@ class AssessmentStandard(db.Model):
     tier_benchmark: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
 
     
-    standard_scores: so.WriteOnlyMapped[List['AssessmentScore']] = so.relationship()
+    standard_scores: so.WriteOnlyMapped[List['AssessmentScore']] = so.relationship(passive_deletes=True)
 
     def __repr__(self):
         return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
@@ -255,9 +251,8 @@ class AssessmentScore(db.Model):
     student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
     assessment_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentStandard.id))
     student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
-    classroom_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Classroom.id)) 
+    classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
     
-
     def __repr__(self):
         return '<Score {}: {}>'.format(self.student_score)
    
