@@ -5,9 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <link rel="stylesheet" href="static/css/bulma.min.css">
-  <!-- Poppins font import -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">>
+     <!-- Poppins font import -->
+     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+     <!-- Bulma css -->
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
   <style>
   @media(max-width: 500px) {
       .reverse-columns {
@@ -45,8 +46,8 @@
               Student Insights
             </h1>
             <div class="buttons">
-              <a href="{{ url_for('auth.login') }}" class="button is-dark is-outlined"><strong>Login</strong></a>
-              <a href="{{ url_for('auth.register') }}" class="button is-warning"><strong>Register</strong></a>
+              <a href="{{ url_for('auth.login') }}" class="button is-outlined is-dark has-text-black"><strong>Login</strong></a>
+              <a href="{{ url_for('auth.register') }}" class="button is-warning has-text-black"><strong>Register</strong></a>
             </div>
           </div>
           <div data-aos="fade-right" class="column

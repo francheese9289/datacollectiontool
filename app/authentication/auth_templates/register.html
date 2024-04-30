@@ -1,15 +1,15 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html>
 
-{% block content %}
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Register</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.4/css/bulma.min.css" />
-  <link rel="stylesheet" type="text/css" href="../static/css/main.css">
-
+  <title>Login Page</title>
+    <!-- Poppins font import -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <!-- Bulma css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
 <style>
   * {
     font-family: 'Poppins', sans-serif;
@@ -52,9 +52,8 @@
     <div class="hero-body has-text-centered">
         <div class="login svg-container">
           <div style="width: 100%; overflow: hidden;">
-            <img src="https://raw.githubusercontent.com/francheese9289/datacollectiontool/main/QZYbjC01.svg" alt="Your SVG Image" style="width: 100%;" />
+            <img src="/static/images/Heading.png" style="width: 100%;" />
           </div>
-        <form method="POST" action="{{ url_for('auth.register') }}">
           {{ form.hidden_tag() }}
           <div class="field">
             <div class="control">
@@ -87,18 +86,20 @@
             </div>
           </div>
           <br />
-          <button class="button is-block is-fullwidth is-warning is-medium " type="submit">
+          <button class="button is-block is-fullwidth is-warning is-medium" type="submit">
+            <a href="{{ url_for('main.user_profile', username=username) }}" class="has-text-black">
               Register New Account
+            </a>
           </button>
-        </form>
         <br>
            <div>
-          <button class="button is-block is-fullwidth is-dark is-medium ">
-            <a href="{{ url_for('auth.login') }}" class="has-text-black">Returning User</a></button>
+          <button class="button is-block is-fullwidth is-dark is-medium">
+            <a href="{{ url_for('auth.login') }}">Returning User</a></button>
           </div>
-      </div>
-    </div>
+          <br />
+          
+        </form>
+       
   </section>
 
 </html>
-{% endblock %}

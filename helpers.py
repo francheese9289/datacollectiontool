@@ -4,6 +4,7 @@ import pandas as pd
 import sqlalchemy as sa
 from models import*
 from faker import Faker
+from forms import PARScoreForm
 from psycopg2.extensions import register_adapter, AsIs
 register_adapter(np.int32, AsIs) #helps translate numpy data types for sqlalchemy
 register_adapter(np.int64, AsIs)
@@ -12,10 +13,10 @@ register_adapter(np.int64, AsIs)
 fake = Faker()
 
 #THINGS TO REMEMBER
-#>When using pd.read_csv in terminal, use \\ on file path
-# >>> query = sa.select(User)
-# >>> users = db.session.scalars(query).all()
-# df.to_dict('index')
+# When using pd.read_csv in terminal, use \\ on file path
+# query = sa.select(User)
+#    users = db.session.scalars(query).all()
+# df.to_dict('index') or 'record'
 
 def make_emails(person_name):
     '''Create email using first initial & last name of person's full name'''
@@ -83,10 +84,20 @@ def class_creation():
 
             x += 1
 
-# >>> ass_dict = data.to_dict('records')
 
-# for a in ass_dict:
-# ...     record = AssessmentStandard(**a)
-# ...     db.session.add(record)
-# ...     db.session.commit()
-# ... 
+def data_entry():
+    # form = PARScoreForm()
+    # if request.method == 'POST' & form.validate_on_submit():
+    # if form.validate_on_submit():
+    user = db.session.scalar(sa.select(User).where(User.last_name == 'Francese'))
+    print('find staff id')
+    staff = db.session.scalar(sa.select(Staff).where(Staff.id == user.staff_id))
+    print (staff.id)
+    current = staff.staff_classrooms[-1] #return classroom object
+    print (f'classroom object: {current}')
+    students = current.class_students
+    print ('list of students:')
+    for student in students:
+        assessment_id =
+        student_id = 
+        print(student.class_student.full_name)

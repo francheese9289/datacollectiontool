@@ -9,7 +9,10 @@
     <!-- Poppins font import -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <!-- Bulma css -->
-  <link rel="stylesheet" href='../static/css/bulma.min.css' />
+    <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+  >
 <style>
   * {
     font-family: 'Poppins', sans-serif;
@@ -52,7 +55,7 @@
     <div class="hero-body has-text-centered">
         <div class="login svg-container">
           <div style="width: 100%; overflow: hidden;">
-            <img src="https://raw.githubusercontent.com/francheese9289/datacollectiontool/main/QZYbjC01.svg" alt="Your SVG Image" style="width: 100%;" />
+            <img src="/static/images/Heading.png" style="width: 100%;" />
           </div>
         <form method="POST" action="{{ url_for('auth.login') }}">
           {{ form.hidden_tag() }}
@@ -68,14 +71,20 @@
               {{ form.password(class="input is-medium is-rounded", placeholder="**********", autocomplete="current-password", required=true) }}
             </div>
           </div>
+          <div class="checkbox">
+            <div class="control">
+              {{ form.remember_me }}
+              {{ form.remember_me.label }}
+            </div>
+          </div>
           <br />
-          <button class="button is-block is-fullwidth is-dark is-medium" type="submit" href="{{ url_for('main.profile', username=current_user.username) }}">
-            Login 
+          <button class="button is-block is-fullwidth is-warning is-medium" type="submit">
+            <a href="{{ url_for('main.user_profile', username=username) }}" class="has-text-black">Login</a>
           </button>
         </form>
         <br>
            <div>
-          <button class="button is-block is-fullwidth is-warning is-medium ">
+          <button class="button is-block is-fullwidth is-dark is-medium ">
             <a href="{{ url_for('auth.register') }}" class="has-text-black">Register</a></button>
           </div>
       </div>

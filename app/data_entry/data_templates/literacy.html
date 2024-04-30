@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<title>Data Entry</title>
+<h1>Data Entry</h1>
+<h2>Literacy Assessments</h2>
+<!-- Tabs for different assessment types--> 
+<div class="tabs is-boxed">
+    <ul>
+      <li class="is-active"><a>Predictive Assessment of Reading</a></li>
+      <li><a href="#">AimsWeb Upload </a></li>
+      <li><a>Words Their Way </a></li>
+      <li><a>Phonological Awareness Screening Test</a></li>
+      <li><a>Quick Phonics Screener</a></li>
+    </ul>
+  </div>
+
+  <section>
+    <!-- Form Start -->
+    {{ form.hidden_tag() }}
+
+  <h3>Choose Period</h3>
+  <div class="control">
+    {{ form.period }}
+  </div>
+  <h4>Enter Standardized Scores</h4>
+  <table>
+    <thead><li>Student Name</li>
+    <li>Letter Word Calling</li>
+    <li>Phonemic Awareness</li>
+    <li>Picture Naming</li>
+    <li>Rapid Naming</li>
+    <li>Total Standardized Score</li>
+    </thead>
+    
+    <tbody>
+      {% for student in students %}
+      <td>{{ student.class_student.full_name }}</td>
+      {% for field in form.fields %}
+      <td class="field">
+        {{ field.parlwss.label }}
+        {{ field.parlwss }}
+      </td>
+      <td class="field">
+        {{ field.parpa.label }}
+        {{ field.parpa }}
+      </td>
+      <td class="field">
+        {{ field.parpn.label }}
+        {{ field.parpn }}
+      </td>
+      <td class="field">
+        {{ field.parrn.label }}
+        {{ field.parrn }}
+      </td>
+      <td class="field">
+        {{ field.partss.label }}
+        {{ field.partss }}
+      </td>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button class="submit">Submit</button>
+
+</section>
+{% endblock %}

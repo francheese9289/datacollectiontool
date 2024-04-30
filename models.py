@@ -3,6 +3,7 @@ import uuid
 import sqlalchemy.orm as so
 import sqlalchemy as sa
 from typing import Optional, List
+from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,7 +34,10 @@ class Role(db.Model):
     permissions: so.Mapped[int] = so.mapped_column(sa.Integer)
 
     #RELATIONSHIPS
-    staff_role: so.WriteOnlyMapped['Staff'] = so.relationship()
+    staff_role: so.WriteOnlyMapped['Staff'] = so.relationship(
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
     # student_role: so.WriteOnlyMapped['Student'] = so.relationship()
         #WriteOnlyMapped defines collection of Staff objects related to each role
     
@@ -83,41 +87,52 @@ class Staff(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     full_name: so.Mapped[str] = so.mapped_column(sa.String(150), index=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(150), unique=True)
-    role_id: so.Mapped[int] =  so.mapped_column(sa.ForeignKey(Role.id)) 
+    profile: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), unique=True)
+    role_id: so.Mapped[int] =  so.mapped_column(sa.ForeignKey(Role.id, ondelete="cascade")) 
 
-    #RELATIONSHIPS
-    staff_classrooms: so.WriteOnlyMapped[List['Classroom']] = so.relationship() 
-    #WriteOnlyMapped defines staff_classrooms as a collection w. Classroom objects inside
-    '''Might need to create function for appending classrooms https://docs.sqlalchemy.org/en/20/tutorial/orm_related_objects.html#tutorial-select-relationships'''
-    # user_id: so.WriteOnlyMapped['User'] = so.relationship(back_populates='staff_id')
+    #This should create a list a of classroom objects, but I'm not sure how to reference it.
+    staff_classrooms: so.Mapped[List['Classroom']] = so.relationship(
+        passive_deletes=True, order_by='Classroom.school_year'
+    ) 
+
 
     def __repr__(self):
         return '<Staff Member {}>'.format(self.full_name)
-   
+    
+    def staff_profile(self):
+        #Moved this function from User to Staff, so that all staff have a profile, regardless if they have an account.
+        first_last = self.full_name.split( )
+        base_username = (first_last[0][0] + first_last[-1]).lower()
+        username = base_username
+        suffix = 1
+        while Staff.query.filter_by(username=username).first() is not None:
+            username = f"{base_username}{suffix}"
+            suffix += 1
+        self.username = username
+        return username
+    
+    def profile_to_dict(self):
+        '''info to display on profile'''
+        current_classroom = self.staff_classrooms[-1]
+        #not worrying about the year right, just using most recent classroom
+        data = current_classroom.to_dict()
+        return data #should this func just be in a route?
 
-
+        
 class User(db.Model, UserMixin):
     '''Creates user accounts and stores user info'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    username: so.Mapped[str] = so.mapped_column(sa.String(150),
-                                                index = True, unique=True)
-    email: so.Mapped[str] = so.mapped_column(sa.String(50),
-                                             index=True)
-    first_name: so.Mapped[str] = so.mapped_column(sa.String(150),
-                                                  index=True, unique=True)
-    last_name: so.Mapped[str] = so.mapped_column(sa.String(150),
-                                                 index=True, unique=True)
-    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256),
-                                                               index=True, unique=True)
+    # username: so.Mapped[str] = so.mapped_column(sa.String(150), index = True, unique=True)
+    email: so.Mapped[str] = so.mapped_column(sa.String(50), index=True)
+    first_name: so.Mapped[str] = so.mapped_column(sa.String(150))
+    last_name: so.Mapped[str] = so.mapped_column(sa.String(150))
+    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     staff_member: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean) #do I need this?
-    staff_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(
-        Staff.id))
+    staff_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(Staff.id))
     
-    #RELATIONSHIPS
-    # user_classrooms: so.WriteOnlyMapped[List['Classroom']] = so.relationship(back_populates='user_id')
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}>'.format(self.get_username())
    
     def set_id(self):
         return str(uuid.uuid4())
@@ -133,11 +148,11 @@ class User(db.Model, UserMixin):
         db.session.delete(self)
         db.session.commit()
 
-    def set_password_hash(self, password):
-        '''password_hash hash- alias of user password_hash to store in db'''
+    def set_password(self, password):
+        '''password_hash - alias of user password to store in db'''
         self.password_hash = generate_password_hash(password)
 
-    def check_password_hash(self, password):
+    def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
     def is_authenticated(self):
@@ -148,38 +163,35 @@ class User(db.Model, UserMixin):
 
     def is_anonymous(self):
         return not self.is_authenticated()
-    
-    def create_username(self):
-        print(f'create_username called with first_name: {self.user_first_name}, last_name: {self.user_last_name}') 
-        base_username = (self.user_first_name[0] + self.user_last_name).lower()
-        username = base_username
-        suffix = 1
-        while User.query.filter_by(username=username).first() is not None:
-            username = f"{base_username}{suffix}"
-            suffix += 1
-        self.username = username
+
+    def get_username(self):
+        staff_user = db.session.scalar(sa.select(Staff).where(
+            self.staff_id == Staff.id
+        ))
+        username = staff_user.profile
         return username
-    
-    # def to_dict(self):
-    #     '''User data in dict form (from Flask 24 tutorial)'''
-    #     data = {
-    #         'id': self.id,
-    #         'username': self.username,
-    #         'email': self.email,
-    #         'name': '{}, {}'.format(self.last_name, self.first_name),
-    #         'staff_id': self.staff_id,
-    #         'links': {'self':'#',
-    #                   'classes': '#'}
-    #     } #add profile page, class pages, do the same for students and schools
-    #     return data
 
-    #def load classrooms?
+    def to_dict(self):
+        '''User data in dict form (from Flask 24 tutorial)'''
+        
+        data = {
+            'id': self.id,
+            'username': self.get_username(),
+            'email': self.email,
+            'name': '{} {}'.format(self.first_name, self.last_name),
+            # 'staff_id': self.staff_id,
+            # 'classes': classrooms,
+            # '_links': {'self':'#',
+            #           'classes': '#'} 
+        } 
+        return data
+    #add profile page, class pages, do the same for students and schools
+    # read tutorial for how to use url for
+
+    # def edit_permissions(self):
 
 
-#Flask tutorial has this outside of class context, need to figure out WHY
-@login_manager.user_loader
-def load_user(id):
-    return db.session.get(User, int(id))
+
 
     
 class Classroom(db.Model):
@@ -193,19 +205,51 @@ class Classroom(db.Model):
     
     #RELATIONSHIPS 
     # teacher_user_id: so.WriteOnlyMapped[Staff] = so.relationship(primaryjoin="and_(User.id==Staff.user_id)")
-    class_students: so.WriteOnlyMapped[List['StudentClassroomAssociation']] = so.relationship(
-        back_populates='student_class')
-    class_scores: so.WriteOnlyMapped[Optional[List['AssessmentScore']]] = so.relationship()
-
+    class_students: so.Mapped[List['StudentClassroomAssociation']] = so.relationship(
+        back_populates='student_class',
+        passive_deletes=True,
+        order_by='StudentClassroomAssociation.classroom_id')
+    class_scores: so.Mapped[Optional[List['AssessmentScore']]] = so.relationship()
 
     def __repr__(self):
-        return '<Classroom {}>'.format(self.id)
+        return (
+            f'{self.id}'
+        )
+    
+    def to_dict(self):
+        staff = sa.select(Staff).where(Staff.id == Classroom.teacher_id)
+        teacher_name = db.session.scalar(staff)
+
+        if self.grade_level == 0:
+            data = {
+                'school_year': self.school_year,
+                'school_name': self.school_name,
+                'grade_level': 'Kindergarten',
+                'teacher': teacher_name
+            }
+        else:
+            data = {
+                'school_year': self.school_year,
+                'school_name': self.school_name,
+                'grade_level': f'Grade {self.grade_level}',
+                'teacher': teacher_name
+            }
+
+        return data
+    
+    def classroom_roster(self):
+        classroom_roster = []
+        students = self.class_students
+        for student in students:
+            classroom_roster.append(student.class_student.full_name)
+        return classroom_roster
 
 
 class Student(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     full_name: so.Mapped[int] = so.mapped_column(sa.String(150))
     email: so.Mapped[Optional[int]] = so.mapped_column(sa.String(150))
+    profile: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), unique=True)
 
     student_classes: so.WriteOnlyMapped[List['StudentClassroomAssociation']] = so.relationship(
         back_populates='class_student')
@@ -213,6 +257,27 @@ class Student(db.Model):
 
     def __repr__(self):
         return '<Student {}>'.format(self.full_name)
+    
+    def student_profile(self):
+        first_last = self.full_name.split( )
+        base_username = (first_last[0][0] + first_last[-1]).lower()
+        username = base_username
+        suffix = 1
+        while Student.query.filter_by(username=username).first() is not None:
+            username = f"{base_username}{suffix}"
+            suffix += 1
+        self.username = username
+        return username
+    
+    def to_dict(self):
+        current_classroom = self.student_classes[-1]
+        cc_data = current_classroom.to_dict()
+        data = {
+            'name': self.full_name,
+            'school': cc_data['school_name'],
+            'grade_level': cc_data['grade_level'],
+            'teacher': cc_data['teacher_name']
+        }
 
 class StudentClassroomAssociation(db.Model):
     '''Association Object connecting Classrooms & Students'''
@@ -244,6 +309,7 @@ class AssessmentStandard(db.Model):
 
     def __repr__(self):
         return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
+    
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
@@ -255,6 +321,18 @@ class AssessmentScore(db.Model):
     
     def __repr__(self):
         return '<Score {}: {}>'.format(self.student_score)
+    
+
+# class DictBundle(sa.Bundle):
+#     def create_row_processor(self, query, procs, labels):
+#         '''Override create_row_processor to return values as dictionaries'''
+
+#         def proc(row):
+#             return dict(
+#                 zip(labels, (proc(row) for proc in procs))
+#             )
+#         return proc
+
    
 
     

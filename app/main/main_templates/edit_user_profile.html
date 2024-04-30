@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Edit Profile</h1>
+</div>
+{{ form.hidden_tag() }}
+<div class="field">
+  <div class="control">
+    {{ form.first_name.label(class="label") }}
+    {{ form.first_name(class="input is-medium is-rounded", placeholder="Jane", autocomplete="username", required=true) }}
+  </div>
+</div>
+<div class="field">
+  <div class="control">
+    {{ form.last_name.label(class="label") }}
+    {{ form.last_name(class="input is-medium is-rounded", placeholder="Doe", autocomplete="username", required=true) }}
+  </div>
+</div>
+<div class="field">
+  <div class="control">
+    {{ form.email.label(class="label") }}
+    {{ form.email(class="input is-medium is-rounded", placeholder="hello@example.com", autocomplete="username", required=true) }}
+  </div>
+</div>
+<div class="field">
+  <div class="control">
+    {{ form.password.label(class="label") }}
+    {{ form.password(class="input is-medium is-rounded", placeholder="**********", autocomplete="current-password", required=true) }}
+  </div>
+</div>
+<div class="field">
+  <div class="control">
+    {{ form.confirm_password.label(class="label") }}
+    {{ form.confirm_password(class="input is-medium is-rounded", placeholder="re-type password", autocomplete="username", required=true) }}
+  </div>
+</div>
+<br />
+<button class="button is-block is-fullwidth is-warning is-medium" type="submit">
+  <a href="{{ url_for('main.user_profile', username=username) }}" class="has-text-black">
+    Submit
+  </a>
+</button>
+
+
+
+{% endblock %}
