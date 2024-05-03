@@ -1,8 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_login import LoginManager
 from config import Config
-from models import db, login_manager
+from models import db, User, login_manager
+from app.dash_app import init_dashboard
 
 
 def init_app():
@@ -43,8 +45,12 @@ def init_app():
         app.register_blueprint(api)
         app.register_blueprint(data)
 
-    return app
+        # dash app
+        from .dash_app import init_dashboard
+        init_dashboard(app)
+        
 
+    return app
 
 
 app = init_app()
@@ -53,3 +59,9 @@ if __name__ == "__main__":
     app.run(host='0.0.0.0')
 
 app
+
+
+
+@app.route('/dash/')
+def dash_app():
+    return init_dashboard.server.index()

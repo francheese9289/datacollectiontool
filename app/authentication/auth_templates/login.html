@@ -58,6 +58,15 @@
             <img src="/static/images/Heading.png" style="width: 100%;" />
           </div>
         <form method="POST" action="{{ url_for('auth.login') }}">
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              <ul class=flashes>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+          {% endwith %}
           {{ form.hidden_tag() }}
           <div class="field">
             <div class="control">
@@ -78,14 +87,13 @@
             </div>
           </div>
           <br />
-          <button class="button is-block is-fullwidth is-warning is-medium" type="submit">
-            <a href="{{ url_for('main.user_profile', username=username) }}" class="has-text-black">Login</a>
-          </button>
+     
+        <button type="submit" class="button is-block is-fullwidth is-warning is-medium">Login</button>
         </form>
         <br>
            <div>
           <button class="button is-block is-fullwidth is-dark is-medium ">
-            <a href="{{ url_for('auth.register') }}" class="has-text-black">Register</a></button>
+            <a href="{{ url_for('auth.register') }}"class="has-text-black">Register</a></button>
           </div>
       </div>
     </div>

@@ -3,13 +3,13 @@ import uuid
 import sqlalchemy.orm as so
 import sqlalchemy as sa
 from typing import Optional, List
-from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
-login_manager = LoginManager() #this is then imported from models > app(init)
+login_manager = LoginManager()
+
 
 ###To insepect database tables use: psql postgresql://vydvbwqr:stgmpejxJhNPWLBWa9PL5JO39puT7k2H@salt.db.elephantsql.com/vydvbwqr
 ##Can use SQL queries during inspection \dt \d \q
@@ -122,17 +122,17 @@ class Staff(db.Model):
 class User(db.Model, UserMixin):
     '''Creates user accounts and stores user info'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    # username: so.Mapped[str] = so.mapped_column(sa.String(150), index = True, unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(50), index=True)
     first_name: so.Mapped[str] = so.mapped_column(sa.String(150))
     last_name: so.Mapped[str] = so.mapped_column(sa.String(150))
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    username: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), unique=True)
     staff_member: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean) #do I need this?
     staff_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(Staff.id))
     
 
     def __repr__(self):
-        return '<User {}>'.format(self.get_username())
+        return '<User {}>'.format(self.username)
    
     def set_id(self):
         return str(uuid.uuid4())
@@ -164,11 +164,14 @@ class User(db.Model, UserMixin):
     def is_anonymous(self):
         return not self.is_authenticated()
 
-    def get_username(self):
-        staff_user = db.session.scalar(sa.select(Staff).where(
-            self.staff_id == Staff.id
-        ))
-        username = staff_user.profile
+    def user_profile(self):
+        base_username = (self.first_name[0] + self.last_name.lower())
+        username = base_username
+        suffix = 1
+        while Staff.query.filter_by(username=username).first() is not None:
+            username = f"{base_username}{suffix}"
+            suffix += 1
+        self.username = username
         return username
 
     def to_dict(self):
@@ -176,13 +179,9 @@ class User(db.Model, UserMixin):
         
         data = {
             'id': self.id,
-            'username': self.get_username(),
+            'username': self.username,
             'email': self.email,
             'name': '{} {}'.format(self.first_name, self.last_name),
-            # 'staff_id': self.staff_id,
-            # 'classes': classrooms,
-            # '_links': {'self':'#',
-            #           'classes': '#'} 
         } 
         return data
     #add profile page, class pages, do the same for students and schools
@@ -212,9 +211,14 @@ class Classroom(db.Model):
     class_scores: so.Mapped[Optional[List['AssessmentScore']]] = so.relationship()
 
     def __repr__(self):
-        return (
-            f'{self.id}'
-        )
+        if self.grade_level == 0:
+            return (
+                f'{self.school_name} | Kindergarten | {self.school_year}'
+            )
+        else:
+            return (
+                f'{self.school_name} | Grade {self.grade_level} | {self.school_year}'
+            )
     
     def to_dict(self):
         staff = sa.select(Staff).where(Staff.id == Classroom.teacher_id)
@@ -310,6 +314,11 @@ class AssessmentStandard(db.Model):
     def __repr__(self):
         return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
     
+    def get_assessment_components(assessment):
+        components = db.session.scalars(sa.select(AssessmentStandard).where(
+        AssessmentStandard.assessment_name == assessment & AssessmentStandard.period == '1').distinct()).all()
+        return components
+    
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
@@ -323,16 +332,3 @@ class AssessmentScore(db.Model):
         return '<Score {}: {}>'.format(self.student_score)
     
 
-# class DictBundle(sa.Bundle):
-#     def create_row_processor(self, query, procs, labels):
-#         '''Override create_row_processor to return values as dictionaries'''
-
-#         def proc(row):
-#             return dict(
-#                 zip(labels, (proc(row) for proc in procs))
-#             )
-#         return proc
-
-   
-
-    

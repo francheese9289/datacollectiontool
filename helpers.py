@@ -4,7 +4,7 @@ import pandas as pd
 import sqlalchemy as sa
 from models import*
 from faker import Faker
-from forms import PARScoreForm
+from flask_login import current_user
 from psycopg2.extensions import register_adapter, AsIs
 register_adapter(np.int32, AsIs) #helps translate numpy data types for sqlalchemy
 register_adapter(np.int64, AsIs)
@@ -14,8 +14,6 @@ fake = Faker()
 
 #THINGS TO REMEMBER
 # When using pd.read_csv in terminal, use \\ on file path
-# query = sa.select(User)
-#    users = db.session.scalars(query).all()
 # df.to_dict('index') or 'record'
 
 def make_emails(person_name):
@@ -85,19 +83,27 @@ def class_creation():
             x += 1
 
 
-def data_entry():
-    # form = PARScoreForm()
-    # if request.method == 'POST' & form.validate_on_submit():
-    # if form.validate_on_submit():
-    user = db.session.scalar(sa.select(User).where(User.last_name == 'Francese'))
-    print('find staff id')
+def data_entry(assessment, username):
+    'return data needed to render data entry table'
+    user = db.session.scalar(sa.select(User).where(User.username == username)) #make sure current_user is accessible (removed for shell testing)
     staff = db.session.scalar(sa.select(Staff).where(Staff.id == user.staff_id))
-    print (staff.id)
-    current = staff.staff_classrooms[-1] #return classroom object
-    print (f'classroom object: {current}')
-    students = current.class_students
-    print ('list of students:')
+    current_class = staff.staff_classrooms[-1] #return classroom object
+    students = current_class.class_students
+
+    assessment_components = db.session.scalars(sa.select(
+        AssessmentStandard.component_name).where(
+            AssessmentStandard.assessment_name==assessment).distinct())
+  
+    data_export = []
     for student in students:
-        assessment_id =
-        student_id = 
-        print(student.class_student.full_name)
+        data = {
+            'Student': student.class_student.full_name,
+            # 'classroom': current_class.id,
+            # 'period': None,
+        }
+        for component in assessment_components:
+            data[f'{component}'] = None
+            
+            data_export.append(data) 
+
+    return data_export

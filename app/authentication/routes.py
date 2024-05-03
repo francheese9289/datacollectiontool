@@ -1,16 +1,16 @@
 import sqlalchemy as sa
 from flask import render_template, Blueprint, request, redirect, url_for, flash, session
 from wtforms.validators import ValidationError
-from models import User, Staff, db, login_manager, check_password_hash
+from models import User, Staff, db, login_manager
 from forms import UserRegistrationForm, UserLoginForm
 from flask_login import login_user, logout_user, login_required, current_user
-
 
 auth = Blueprint('auth', __name__, template_folder='auth_templates')
 
 @login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, user_id)
+def load_user(id):
+    return db.session.get(User, int(id))
+
 
 #login route
 @auth.route('/login', methods=['GET', 'POST'])
@@ -20,8 +20,7 @@ def login():
     Redirect to profile page if/once logged in.
     '''
     if current_user.is_authenticated:
-        return redirect(url_for('main.user_profile'))
-    
+        return redirect(url_for('main.user', username=current_user.username))
     
     form = UserLoginForm()
     if form.validate_on_submit():
@@ -36,11 +35,10 @@ def login():
 
         login_user(user, remember=form.remember_me.data)
         
-        user_id = user.id
 
         flash('Login successful!', 'success')
         
-        return redirect(url_for('main.user_profile'))
+        return redirect(url_for('main.user', username=user.username))
     
     return render_template('login.html', form=form)
 
@@ -83,7 +81,7 @@ def register():
 
             #success message
             flash(f'Account created for {user.email}!', 'success')
-            return redirect(url_for('main.user_profile'))
+            return redirect(url_for('main.user', username=user.username))
     else:
         return render_template('register.html', form=form)
 

@@ -1,68 +1,49 @@
-{% extends 'base.html' %}
+<!-- {% extends 'base.html' %}
 
 {% block content %}
+<html>
+  <head>
+<link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
 
+</head>
+<div id="table"></div>
+<script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script>
+const tableDiv = document.getElementById('table');
 
-<title>Data Entry</title>
-<h1>Data Entry</h1>
-<h2>Literacy Assessments</h2>
-<!-- Tabs for different assessment types--> 
-<div class="tabs is-boxed">
-    <ul>
-      <li class="is-active"><a>Predictive Assessment of Reading</a></li>
-      <li><a href="#">AimsWeb Upload </a></li>
-      <li><a>Words Their Way </a></li>
-      <li><a>Phonological Awareness Screening Test</a></li>
-      <li><a>Quick Phonics Screener</a></li>
-    </ul>
-  </div>
+const updateUrl = (prev, query) => {
+  return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
+};
 
-  <section>
-    <!-- Form Start -->
-    {{ form.hidden_tag() }}
-
-  <h3>Choose Period</h3>
-  <div class="control">
-    {{ form.period }}
-  </div>
-  <h4>Enter Standardized Scores</h4>
-  <table>
-    <thead><li>Student Name</li>
-    <li>Letter Word Calling</li>
-    <li>Phonemic Awareness</li>
-    <li>Picture Naming</li>
-    <li>Rapid Naming</li>
-    <li>Total Standardized Score</li>
-    </thead>
-    
-    <tbody>
-      {% for student in students %}
-      <td>{{ student.class_student.full_name }}</td>
-      {% for field in form.fields %}
-      <td class="field">
-        {{ field.parlwss.label }}
-        {{ field.parlwss }}
-      </td>
-      <td class="field">
-        {{ field.parpa.label }}
-        {{ field.parpa }}
-      </td>
-      <td class="field">
-        {{ field.parpn.label }}
-        {{ field.parpn }}
-      </td>
-      <td class="field">
-        {{ field.parrn.label }}
-        {{ field.parrn }}
-      </td>
-      <td class="field">
-        {{ field.partss.label }}
-        {{ field.partss }}
-      </td>
-      {% endfor %}
-    </tbody>
-  </table>
-  <button class="submit">Submit</button>
-
-</section>
-{% endblock %}
+const editableCellAttributes = (data, row, col) => {
+    if (row) {
+      return {contentEditable: 'true', 'data-element-id': row.cells[0].data};
+    }
+    else {
+      return {};
+    }
+};
+new gridjs.Grid({
+  columns: [
+    { id: 'student-name', name: 'Student Name' },
+    {% for component in components %}
+    { id:"{{ component.id }}", name:"{{ component.component_name }}" },
+    {% endfor %}
+  ],
+  data: [
+    {% for student in students %}
+      {
+        name: '{{ student.class_students.full_name }}',
+        age: {{ user.age }},
+        address: '{{ user.address }}',
+        phone: '{{ user.phone }}',
+        email: '{{ user.email }}'
+      },
+    {% endfor %}
+  ],
+  search: true,
+  sort: true,
+  pagination: true,
+}).render(document.getElementById('table'));
+</script>
+</html> -->
