@@ -4,7 +4,6 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from config import Config
 from models import db, User, login_manager
-from app.dash_app import init_dashboard
 
 
 def init_app():
@@ -37,17 +36,17 @@ def init_app():
         from .main.routes import main
         from .authentication.routes import auth
         from .api.routes import api
-        from .data_entry.routes import data
+        # from .data_entry.routes import data
         
         # register blueprints
         app.register_blueprint(main)
         app.register_blueprint(auth)
         app.register_blueprint(api)
-        app.register_blueprint(data)
+        # app.register_blueprint(data)
 
         # dash app
-        from .dash_app import init_dashboard
-        init_dashboard(app)
+        # from .dash_app import init_dashboard
+        # init_dashboard(app)
         
 
     return app
@@ -58,10 +57,12 @@ app = init_app()
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
 
+
+
 app
 
 
 
-@app.route('/dash/')
-def dash_app():
-    return init_dashboard.server.index()
+# @app.route('/dash/')
+# def dash_app():
+#     return init_dashboard.server.index()

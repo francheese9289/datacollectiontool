@@ -39,7 +39,7 @@ class Role(db.Model):
         passive_deletes=True
     )
     # student_role: so.WriteOnlyMapped['Student'] = so.relationship()
-        #WriteOnlyMapped defines collection of Staff objects related to each role
+    #WriteOnlyMapped defines collection of Staff objects related to each role
     
     def __repr__(self):
         return '<Role %r>' % self.permissions
@@ -80,7 +80,6 @@ class Role(db.Model):
             role.permissions = sum(permissions)
             db.session.add(role)
         db.session.commit()
-   
 
 class Staff(db.Model):
     '''Checks Staff table for new user pre-assigned role, also can update and remove roles '''
@@ -133,7 +132,7 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
-   
+
     def set_id(self):
         return str(uuid.uuid4())
     
@@ -238,7 +237,6 @@ class Classroom(db.Model):
                 'grade_level': f'Grade {self.grade_level}',
                 'teacher': teacher_name
             }
-
         return data
     
     def classroom_roster(self):
@@ -295,7 +293,7 @@ class StudentClassroomAssociation(db.Model):
     def __repr__(self):
         return '<Student:{}, Class:{}>'.format(self.student_id, self.classroom_id)
     
-
+#THIS TABLE SUCKS
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -314,11 +312,12 @@ class AssessmentStandard(db.Model):
     def __repr__(self):
         return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
     
+
     def get_assessment_components(assessment):
-        components = db.session.scalars(sa.select(AssessmentStandard).where(
-        AssessmentStandard.assessment_name == assessment & AssessmentStandard.period == '1').distinct()).all()
+        components = db.session.scalars(sa.select(AssessmentStandard.component_name)
+                                        .where(AssessmentStandard.assessment_name == assessment).distinct())
         return components
-    
+            
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
@@ -330,5 +329,3 @@ class AssessmentScore(db.Model):
     
     def __repr__(self):
         return '<Score {}: {}>'.format(self.student_score)
-    
-

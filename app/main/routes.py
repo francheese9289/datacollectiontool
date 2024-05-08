@@ -1,5 +1,4 @@
-from models import db, User, Classroom, login_manager
-from helpers import data_entry
+from models import db, User, Classroom, login_manager, Staff
 from forms import UserRegistrationForm
 import sqlalchemy as sa
 from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session, abort, jsonify
@@ -30,23 +29,24 @@ def user_list():
 @main.route('/user/<username>', methods=['GET'])
 @login_required
 def user(username):
-     '''
-     Generate url end point by fetching logged in user's id.
-     '''
-     user=db.first_or_404(sa.select(User).where(User.username == username))
-     user_data = user.to_dict()
-     class_data = data_entry('Predictive Assessment of Reading','lfrancese')
-     return render_template('user.html', user=user, user_data=user_data, class_data=class_data)
+    '''
+    Generate url end point by fetching logged in user's id.
+    '''
+    user=db.first_or_404(sa.select(User).where(User.username == username))
+    user_data = user.to_dict()
+    staff = db.session.scalar(sa.select(Staff).where(Staff.id == user.staff_id))
+    class_data = staff.staff_classrooms[-1]
+    return render_template('user.html', user=user, user_data=user_data, class_data=class_data)
 
 @main.route('/edit_user/<username>', methods=['GET', 'POST'])
 #testing to see how to make populate_obj work for editing data
 @login_required
 def edit_user(username):
-     user=db.first_or_404(sa.select(User).where(User.username == username))
-     form = UserRegistrationForm()
-     if request.method == 'POST' and form.validate():
-         form.populate_obj(user)
-         db.session.save(user)
-         db.session.commit()
-         redirect ('edit_user')
-     return render_template('edit_user.html', user=user, form=form)
+    user=db.first_or_404(sa.select(User).where(User.username == username))
+    form = UserRegistrationForm()
+    if request.method == 'POST' and form.validate():
+        form.populate_obj(user)
+        db.session.save(user)
+        db.session.commit()
+        redirect ('edit_user')
+    return render_template('edit_user.html', user=user, form=form)

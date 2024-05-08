@@ -1,0 +1,42 @@
+
+{% extends 'base.html' %}
+FieldList, IntegerFieldFieldList, IntegerField
+{% block content %}
+<h2>Data Entry</h2>
+{% for message in messages %}
+    <div class="notification is-danger">
+        {{ message }}
+    </div>
+    {% endfor %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {{ form.csrf_token }}
+        <div class="table-container">
+        <table class="table is-bordered is-striped is-hoverable">
+        <thead>
+            <tr>
+                <th>Student</th>
+                {% for component in components %}
+                <th>{{ component }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{ student.full_name }}</td>
+                    {% for component in components %}
+                    <td><input class="input"> {{ form.component }}{{ form.score }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+    </div>
+    <input class="button" type="submit" value="Submit" />
+    <input class="button is-danger is dark" type="reset" value="Reset" />
+    </form>
+
+
+{% endblock %}

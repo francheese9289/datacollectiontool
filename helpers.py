@@ -74,7 +74,7 @@ def class_creation():
             for r in roster:
                 student = Student(**r)
                 sc = {'student_id': student.id,
-                      'classroom_id': classroom.id}
+                    'classroom_id': classroom.id}
                 student_class = StudentClassroomAssociation(**sc)
                 db.session.add(student)
                 db.session.add(student_class)
@@ -83,27 +83,3 @@ def class_creation():
             x += 1
 
 
-def data_entry(assessment, username):
-    'return data needed to render data entry table'
-    user = db.session.scalar(sa.select(User).where(User.username == username)) #make sure current_user is accessible (removed for shell testing)
-    staff = db.session.scalar(sa.select(Staff).where(Staff.id == user.staff_id))
-    current_class = staff.staff_classrooms[-1] #return classroom object
-    students = current_class.class_students
-
-    assessment_components = db.session.scalars(sa.select(
-        AssessmentStandard.component_name).where(
-            AssessmentStandard.assessment_name==assessment).distinct())
-  
-    data_export = []
-    for student in students:
-        data = {
-            'Student': student.class_student.full_name,
-            # 'classroom': current_class.id,
-            # 'period': None,
-        }
-        for component in assessment_components:
-            data[f'{component}'] = None
-            
-            data_export.append(data) 
-
-    return data_export
