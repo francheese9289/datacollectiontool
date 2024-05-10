@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
-<h1>Profile</h1>
-<section class="hero is-link is-fullheight is-fullheight-with-navbar">
+<section class="hero has-background-primary-15 has-text-light is-fullheight is-fullheight-with-navbar">
   <div class="hero-body">
     <div class="container">WELCOME
-      <h1 class="title is-1">
+      <h1 class="title is-1 has-text-light">
         {{ current_user.first_name }}
       </h1>
       {% for key, value in user_data|dictsort %}
-      <h4 class="subtitle is-3">
+      <h4 class="subtitle is-3 has-text-light">
         {{ key.title() }}: {{ value }}
       </h4>
       {% endfor %}

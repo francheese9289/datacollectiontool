@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, FormField, Form, SelectField, HiddenField, FloatField, FieldList, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo
-from wtforms.widgets import NumberInput, HiddenInput, ListWidget, RadioInput, Select
-
+from wtforms.widgets import NumberInput, HiddenInput, ListWidget, RadioInput, Select, TextInput, TableWidget
+from models import AssessmentComponent, AssessmentStandard, AssessmentScore, StudentClassroomAssociation, Classroom
 class UserLoginForm(FlaskForm):
     email = StringField('Email', validators = [DataRequired(), Email(message='enter a valid email')])
     password = PasswordField('Password', validators = [DataRequired()])
@@ -17,17 +17,41 @@ class UserRegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', 
         validators=[DataRequired(), EqualTo('password', message='Passwords Must Match')])
 
+
+
+
+
 class ComponentForm(Form):
-    component = HiddenField('Component', widget=HiddenInput())
+    component_id = HiddenField('Component ID')
     score = FloatField('Score', default=0.0, widget=NumberInput())
 
+
+    
+
+    # def __init__(self, obj=AssessmentComponent().id, *args, **kwargs):
+    #     super(ComponentForm, self).__init__(*args, **kwargs)
+    #     self.score.widget.input_type = 'number'
+    #     self.score.widget.min = 0.0
+    #     self.score.widget.max = 100.0
+    #     self.score.widget.step = 1.0
+    #     self.score.widget.value = 0.0
+    #     self.score.label = 'Score'
+    #     self.score.default = 0.0
+    #     self.score.validators = [DataRequired()]
+    #     self.score.render_kw = {'class': 'form-control', 'placeholder': 'Score'}
+    #     self.component_id.label = 'Component ID'
+    #     self.component_id.default = obj
+
 class AssessmentScoreForm(FlaskForm):
-    student = StringField(u'Student Name') 
-    components = FieldList(FormField(ComponentForm), min_entries=1, widget=ListWidget())
+    student_id = HiddenField('Student ID')
+    assessment_name=HiddenField(u'Assessment Name')
+    period = SelectField("Choose an option", validate_choice=False, choices={'1':'fall','2':'winter','3':'spring'}) 
+    components = FieldList(FormField(ComponentForm))
+    submit = SubmitField()
 
+#new ideas: one - changing the field list to student id and iterating through components. two - changing the score field to a form field in assessment score form
+# three  - try making a table widget for the component form (still don't)
+# class ComponentScoreForm(FlaskForm):
+#     component_id = HiddenField('Component ID')
+#     score = FloatField('Score', default=0.0, widget=NumberInput())
 
-
-class ScoreParentData(FlaskForm):
-    period = SelectField("Choose an option", validate_choice=False, choices=['fall','winter','spring']) 
-    classroom = HiddenField(u'Classroom')
-    assessment_name=SelectField("Choose an option", validate_choice=False, choices=['Predictive Assessment of Reading', 'Primary Number Operations Assessment'], widget=Select())

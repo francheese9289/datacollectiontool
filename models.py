@@ -89,11 +89,9 @@ class Staff(db.Model):
     profile: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), unique=True)
     role_id: so.Mapped[int] =  so.mapped_column(sa.ForeignKey(Role.id, ondelete="cascade")) 
 
-    #This should create a list a of classroom objects, but I'm not sure how to reference it.
     staff_classrooms: so.Mapped[List['Classroom']] = so.relationship(
         passive_deletes=True, order_by='Classroom.school_year'
     ) 
-
 
     def __repr__(self):
         return '<Staff Member {}>'.format(self.full_name)
@@ -115,7 +113,7 @@ class Staff(db.Model):
         current_classroom = self.staff_classrooms[-1]
         #not worrying about the year right, just using most recent classroom
         data = current_classroom.to_dict()
-        return data #should this func just be in a route?
+        return data 
 
         
 class User(db.Model, UserMixin):
@@ -243,7 +241,10 @@ class Classroom(db.Model):
         classroom_roster = []
         students = self.class_students
         for student in students:
-            classroom_roster.append(student.class_student.full_name)
+            class_student = {
+                'student_id': student.class_student.id,
+                'student_name':student.class_student.full_name}
+            classroom_roster.append(class_student)
         return classroom_roster
 
 
@@ -292,40 +293,76 @@ class StudentClassroomAssociation(db.Model):
 
     def __repr__(self):
         return '<Student:{}, Class:{}>'.format(self.student_id, self.classroom_id)
+
+    def classroom_roster_dict(self):
+        students = []
+        for student_id in self.class_student.id:
+            students.append(Student.query.filter_by(id=student_id).first().full_name)
+        data = {
+            'classroom_id': self.classroom_id,
+            'students': students
+        }    
+        return data
     
-#THIS TABLE SUCKS
-class AssessmentStandard(db.Model):
-    '''general information about each assessment'''
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    component_id: so.Mapped[str] = so.mapped_column(sa.String(15))
+class AssessmentComponent(db.Model):
+    '''New table for assessment components, separate from assessment standards'''
+    id: so.Mapped[str] = so.mapped_column(primary_key=True)
     subject: so.Mapped[str] = so.mapped_column(sa.String(50))
     component_name: so.Mapped[str] = so.mapped_column(sa.String(100))
     assessment_name: so.Mapped[str] = so.mapped_column(sa.String(100))
-    grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
-    period: so.Mapped[int] = so.mapped_column(sa.Integer)
-    tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50))
-    tier_benchmark: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
 
-    
-    standard_scores: so.WriteOnlyMapped[List['AssessmentScore']] = so.relationship(passive_deletes=True)
+    component_standards: so.Mapped[List['AssessmentStandard']] = so.relationship()
+    component_scores: so.Mapped[List['AssessmentScore']] = so.relationship()
 
     def __repr__(self):
-        return '<Assessment {}: {}>'.format(self.assessment_name, self.component_name)
-    
+        return '<{}: {}>'.format(self.assessment_name, self.component_name)
 
-    def get_assessment_components(assessment):
-        components = db.session.scalars(sa.select(AssessmentStandard.component_name)
-                                        .where(AssessmentStandard.assessment_name == assessment).distinct())
-        return components
-            
+    def to_dict(self):
+        data ={
+            'id': self.id,
+            'assessment_name': self.assessment_name,
+            'component_name': self.component_name,
+            'subject': self.subject
+        }
+        return data
+
+
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
-    assessment_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentStandard.id))
+    period: so.Mapped[int] = so.mapped_column(sa.Integer)
+    component_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
     student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
     classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
     
+    # score_standard: so.Mapped[Optional[List['ScoreStandardAssociation']]] = so.relationship
+    
     def __repr__(self):
         return '<Score {}: {}>'.format(self.student_score)
+    
+
+class AssessmentStandard(db.Model):
+    '''general information about each assessment'''
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    component_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
+    grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
+    period: so.Mapped[int] = so.mapped_column(sa.Integer)
+    tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50))
+    tier_benchmark: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+
+    def __repr__(self):
+        return '<Standard for {}: grade {}, period {}, tier {}>'.format(self.component_id, self.grade_level, self.period, self.tier)
+    
+
+# for this table, I need to figure out how to connect the score to the standard by component_id, period (from score), and grade level (from classroom)
+
+# class ScoreStandardAssociation(db.Model):
+#     '''Association table between assessment standards and scores'''
+#     score_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentScore.id), primary_key=True)
+#     standard_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentStandard.id), primary_key=True)
+
+#     standard_score: so.Mapped['AssessmentScore'] = so.relationship(back_populates='score_standard')
+
+    
