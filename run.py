@@ -1,6 +1,7 @@
 from app import init_app
 from models import db
 
+
 app = init_app()
 
 

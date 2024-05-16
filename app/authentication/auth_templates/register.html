@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Page</title>
+  <title>Registration Page</title>
     <!-- Poppins font import -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <!-- Bulma css -->
@@ -52,21 +52,13 @@
     <div class="hero-body has-text-centered">
         <div class="login svg-container">
           <div style="width: 100%; overflow: hidden;">
-            <img src="../../static/images/Insights.svg" style="width: 100%;" />
+            <img src="../../static/images/insights_dark.png" style="width: 100%;" />
           </div>
-          {% with messages = get_flashed_messages() %}
-            {% if messages %}
-              <ul class=flashes>
-              {% for message in messages %}
-                <li>{{ message }}</li>
-              {% endfor %}
-              </ul>
-            {% endif %}
-          {% endwith %}
+          <form method="POST" action="{{ url_for('auth.register') }}">
           {{ form.hidden_tag() }}
           <div class="field">
-            <div class="control">
               {{ form.first_name.label(class="label") }}
+              <div class="control">
               {{ form.first_name(class="input is-medium is-rounded", placeholder="Jane", autocomplete="username", required=true) }}
             </div>
           </div>
@@ -96,14 +88,11 @@
           </div>
           <br />
           <button class="button is-block is-fullwidth is-warning is-medium" type="submit">
-            
-            <a href="{{ url_for('main.index') }}" class="has-text-black">
-              Register New Account
-            </a>
+            Register New Account
           </button>
         <br>
-           <div>
-            <a href="{{ url_for(auth.login') }}" class="button is-block is-fullwidth is-warning is-medium">
+          <div>
+            <a href="{{ url_for('auth.login') }}" class="button is-block is-fullwidth is-dark is-medium">
               User Login
             </a>
             
@@ -111,7 +100,6 @@
           <br />
           
         </form>
-       
   </section>
 
 </html>

@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 from flask import render_template, Blueprint, request, redirect, url_for, flash, session
+from werkzeug.middleware.profiler import ProfilerMiddleware
 from wtforms.validators import ValidationError
 from models import User, Staff, db, login_manager
 from forms import UserRegistrationForm, UserLoginForm
@@ -38,7 +39,7 @@ def login():
 
         flash('Login successful!', 'success')
         
-        return redirect(url_for('main.user', username=user.username))
+        return redirect(url_for('main.profile', username=user.username))
     
     return render_template('login.html', form=form)
 
@@ -63,11 +64,12 @@ def register():
             user = User(
                 email= form.email.data,
                 first_name=form.first_name.data,
-                last_name=form.last_name.data,
+                last_name=form.last_name.data
             )
 
             user.set_id()
             user.set_password(form.password.data)
+            user.user_profile()
             user.staff_member = True
             user.staff_id = staff.id
             
@@ -81,7 +83,7 @@ def register():
 
             #success message
             flash(f'Account created for {user.email}!', 'success')
-            return redirect(url_for('main.user', username=user.username))
+            return redirect(url_for('main.profile', username=user.username))
     else:
         return render_template('register.html', form=form)
 

@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from config import Config
 from models import db, User, login_manager
+from werkzeug.middleware.profiler import ProfilerMiddleware
 
 
 def init_app():
@@ -16,6 +17,7 @@ def init_app():
     #plugins
     db.init_app(app) 
     login_manager.init_app(app)
+    # ProfilerMiddleware(app)
 
 
     #database connection
@@ -26,9 +28,9 @@ def init_app():
     def teardown_db(exception=None):
         db.session.remove()
     
-    @app.before_request
-    def print_connection_status():
-        print("Active connections:", db.engine.pool.status())
+    # @app.before_request
+    # def print_connection_status():
+    #     print("Active connections:", db.engine.pool.status())
 
 
     with app.app_context():
@@ -36,23 +38,21 @@ def init_app():
         from .main.routes import main
         from .authentication.routes import auth
         from .api.routes import api
-        # from .data_entry.routes import data
+        from .dashboard.routes import dashboard
         
         # register blueprints
         app.register_blueprint(main)
         app.register_blueprint(auth)
         app.register_blueprint(api)
-        # app.register_blueprint(data)
-
-        # dash app
-        # from .dash_app import init_dashboard
-        # init_dashboard(app)
+        app.register_blueprint(dashboard)
         
-
     return app
 
 
 app = init_app()
+
+a = ProfilerMiddleware(app)
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
@@ -61,8 +61,3 @@ if __name__ == "__main__":
 
 app
 
-
-
-# @app.route('/dash/')
-# def dash_app():
-#     return init_dashboard.server.index()

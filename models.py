@@ -2,6 +2,7 @@
 import uuid 
 import sqlalchemy.orm as so
 import sqlalchemy as sa
+import pandas as pd
 from typing import Optional, List
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
@@ -9,7 +10,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-
 
 ###To insepect database tables use: psql postgresql://vydvbwqr:stgmpejxJhNPWLBWa9PL5JO39puT7k2H@salt.db.elephantsql.com/vydvbwqr
 ##Can use SQL queries during inspection \dt \d \q
@@ -162,14 +162,14 @@ class User(db.Model, UserMixin):
         return not self.is_authenticated()
 
     def user_profile(self):
-        base_username = (self.first_name[0] + self.last_name.lower())
+        base_username = (self.first_name[0].lower() + self.last_name.lower())
         username = base_username
         suffix = 1
-        while Staff.query.filter_by(username=username).first() is not None:
+        while User.query.filter_by(username=username).first() is not None:
             username = f"{base_username}{suffix}"
             suffix += 1
         self.username = username
-        return username
+        return self.username
 
     def to_dict(self):
         '''User data in dict form (from Flask 24 tutorial)'''
@@ -184,12 +184,16 @@ class User(db.Model, UserMixin):
     #add profile page, class pages, do the same for students and schools
     # read tutorial for how to use url for
 
-    # def edit_permissions(self):
+    def get_current_classroom(self):
+        '''Returns the most recent classroom for a user'''
+        if self.staff_member:
+            staff = db.session.scalar(sa.select(
+        Staff).where(Staff.id == self.staff_id))
+            return staff.staff_classrooms[-1]
+        else:
+            return None
 
 
-
-
-    
 class Classroom(db.Model):
     '''Classroom associates grade level, school and year with their teachers
     to assure student privacy and specificity of access'''
@@ -200,27 +204,27 @@ class Classroom(db.Model):
     teacher_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Staff.id))
     
     #RELATIONSHIPS 
-    # teacher_user_id: so.WriteOnlyMapped[Staff] = so.relationship(primaryjoin="and_(User.id==Staff.user_id)")
     class_students: so.Mapped[List['StudentClassroomAssociation']] = so.relationship(
         back_populates='student_class',
         passive_deletes=True,
         order_by='StudentClassroomAssociation.classroom_id')
     class_scores: so.Mapped[Optional[List['AssessmentScore']]] = so.relationship()
 
+
     def __repr__(self):
         if self.grade_level == 0:
             return (
-                f'{self.school_name} | Kindergarten | {self.school_year}'
+                f'{self.school_year} | {self.school_name} | Kindergarten'
             )
         else:
             return (
-                f'{self.school_name} | Grade {self.grade_level} | {self.school_year}'
+                f'{self.school_year} | {self.school_name} | Grade {self.grade_level}'
             )
     
     def to_dict(self):
-        staff = sa.select(Staff).where(Staff.id == Classroom.teacher_id)
-        teacher_name = db.session.scalar(staff)
-
+        teacher_name = db.session.scalar(sa.select(
+            Staff.full_name).where(
+                Staff.id == self.teacher_id)) #for some reason this isn't working properly, giving wrong name
         if self.grade_level == 0:
             data = {
                 'school_year': self.school_year,
@@ -246,7 +250,7 @@ class Classroom(db.Model):
                 'student_name':student.class_student.full_name}
             classroom_roster.append(class_student)
         return classroom_roster
-
+    
 
 class Student(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -281,6 +285,19 @@ class Student(db.Model):
             'grade_level': cc_data['grade_level'],
             'teacher': cc_data['teacher_name']
         }
+
+    def student_score_df(self):
+        '''
+        Merges student dict with score dict and
+        returns a detailed dataframe.
+        '''
+        student_scores = []
+        scores = self.student_scores
+        for score in scores:
+            student_score_dict = score.to_dict()
+            student_scores.append(student_score_dict)
+        full_score_data = pd.DataFrame(student_scores)
+        return full_score_data
 
 class StudentClassroomAssociation(db.Model):
     '''Association Object connecting Classrooms & Students'''
@@ -326,22 +343,21 @@ class AssessmentComponent(db.Model):
         }
         return data
 
-
-
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
     period: so.Mapped[int] = so.mapped_column(sa.Integer)
+    score_tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String) #remove this?
     component_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
     student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
     classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
     
-    # score_standard: so.Mapped[Optional[List['ScoreStandardAssociation']]] = so.relationship
-    
     def __repr__(self):
-        return '<Score {}: {}>'.format(self.student_score)
+        return '<Score {}>'.format(self.student_score)
     
+
+
 
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
@@ -349,20 +365,22 @@ class AssessmentStandard(db.Model):
     component_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
     grade_level: so.Mapped[int] = so.mapped_column(sa.Integer)
     period: so.Mapped[int] = so.mapped_column(sa.Integer)
-    tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50))
-    tier_benchmark: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+    tier_1: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+    tier_2: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+    tier_3: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
+
+    standard_components: so.Mapped[List['AssessmentComponent']] = so.relationship(back_populates='component_standards')
 
     def __repr__(self):
-        return '<Standard for {}: grade {}, period {}, tier {}>'.format(self.component_id, self.grade_level, self.period, self.tier)
+        return '<Standard for {}, Grade {}, Period {}, {}: {}>'.format(self.component_id, self.grade_level, self.period, self.tier, self.tier_benchmark)
     
-
-# for this table, I need to figure out how to connect the score to the standard by component_id, period (from score), and grade level (from classroom)
-
-# class ScoreStandardAssociation(db.Model):
-#     '''Association table between assessment standards and scores'''
-#     score_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentScore.id), primary_key=True)
-#     standard_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentStandard.id), primary_key=True)
-
-#     standard_score: so.Mapped['AssessmentScore'] = so.relationship(back_populates='score_standard')
-
-    
+    def to_dict(self):
+        data = {
+            'component_id': self.component_id,
+            'grade_level': self.grade_level,
+            'period': self.period,
+            'tier_1': self.tier_1,
+            'tier_2': self.tier_2,
+            'tier_3': self.tier_3,
+        }
+        return data 

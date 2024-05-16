@@ -32,7 +32,7 @@
     }
   </style>
 </head>
- <section class="hero is-white is-fullheight">
+<section class="hero is-white is-fullheight">
     <div class="hero-body">
       <div class="container">
         <div class="columns is-vcentered reverse-columns">
@@ -42,9 +42,8 @@
           is-5-desktop 
           is-5-widescreen 
           is-5-fullhd " data-aos="fade-down">
-            <h1 class="title titled is-1mb-6">
-              Student Insights
-            </h1>
+          <figure class="image"><img src="{{ url_for('static', filename='images/insights_dark.png') }}"></figure>
+          <br>
             <div class="buttons">
               <a href="{{ url_for('auth.login') }}" class="button is-outlined is-dark has-text-black"><strong>Login</strong></a>
               <a href="{{ url_for('auth.register') }}" class="button is-warning has-text-black"><strong>Register</strong></a>

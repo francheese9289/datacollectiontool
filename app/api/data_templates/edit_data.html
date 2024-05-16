@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <!-- FORM -->
+    <div class="container is-fluid">
+        <h1>Edit Data</h1>
+        <form action="" method="POST">
+            {{ form.hidden_tag() }}
+            {{ form.csrf_token }}
+            <br>
+            <div class="select is-right">
+                    <select name="period" class="is-focused ">
+                        {% for period_value in form.period.choices.keys() %}
+                            <option value="{{ period_value }}">{{ form.period.choices[period_value] }}</option>
+                        {% endfor %}
+                    </select>
+            </div>
+            <br></br>
+            
+    
+            <div class="table-container">
+            <table class="table is-striped is-narrow is-hoverable text-is-centered">
+                <thead class="has-background-warning-5">
+                    <tr>
+                        <th>Student</th>
+                        {% for component in components %}
+                        <th>{{ component.component_name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in roster_data %}
+                    <tr>
+                        <td>{{ data.full_name }}</td>
+                        {% for component in components %}
+                        <td>
+                            <input class="input is-dark" type="number" name="score_{{ data.id }}_{{ component.id }}" value="0.0">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <div class="buttons is-focused">
+                <input class="button" type="submit" value="Submit" />
+                <input class="button is-primary is-inverted" type="reset" value="Reset" />
+            </div>
+            <br></br>
+        </form>
+    </div>    
+
+    {% endblock %}

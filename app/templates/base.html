@@ -36,41 +36,37 @@
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
       <a class="navbar-item">
-        <img src="/static/images/InsightsLight.png" width="100" height="160">
+        <img src="/static/images/insights_white.png" width="100" height="160">
       </a>
     </div>
 
     <div class="navbar-menu">
 
         {% if current_user.is_authenticated %}
+        <!-- DROPDOWN -->
         <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">
-            Data Entry
-          </a>
-  
-          <div class="navbar-dropdown">
-            <a class="navbar-item" href="{{ url_for('api.data_entry') }}">
-              Literacy
-            </a>
-            <a class="navbar-item">
-              Math
-            </a>
-            <a class="navbar-item">
-              Social Emotional Learning
-            </a>
-            <hr class="navbar-divider">
-            <a class="navbar-item">
-              Report an issue
-            </a>
-          </div>
-        </div>
-        <a class="navbar-item">
+        <a class="navbar-link" href="{{ url_for('api.data_entry') }}">
+          Data Entry
+        </a>
+        <div class="navbar-dropdown">
+        <a class="navbar-item" href="{{ url_for('api.data_entry_lit') }}">
+          Literacy
+        </a>
+        <a class="navbar-item" href="{{ url_for('api.data_entry_math') }}">
+          Math
+        </a>
+        <a class="navbar-item" href="#">
+          Social Emotional
+        </a>
+      </div>
+    </div>
+        <a class="navbar-item" href="{{ url_for('dashboard.class_dashboard', classroom_id=current_user.get_current_classroom().id) }}">
           Insights
         </a>
-        <a class="navbar-item" href="{{ url_for('main.user', username=current_user.username) }}">
+        <a class="navbar-item" href="{{ url_for('main.profile', username=current_user.username) }}">
           Profile
         </a>
-        <a class="navbar-item" href="{{ url_for('main.edit_user', username=current_user.username) }}">
+        <a class="navbar-item" href="{{ url_for('main.edit_profile', username=current_user.username) }}">
           Edit Profile
         </a>
         <div class="navbar-end">
