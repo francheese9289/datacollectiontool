@@ -170,9 +170,8 @@ class User(db.Model, UserMixin):
             suffix += 1
         self.username = username
         return self.username
-
+    
     def to_dict(self):
-        '''User data in dict form (from Flask 24 tutorial)'''
         
         data = {
             'id': self.id,
@@ -182,7 +181,6 @@ class User(db.Model, UserMixin):
         } 
         return data
     #add profile page, class pages, do the same for students and schools
-    # read tutorial for how to use url for
 
     def get_current_classroom(self):
         '''Returns the most recent classroom for a user'''
@@ -208,8 +206,7 @@ class Classroom(db.Model):
         back_populates='student_class',
         passive_deletes=True,
         order_by='StudentClassroomAssociation.classroom_id')
-    class_scores: so.Mapped[Optional[List['AssessmentScore']]] = so.relationship()
-
+    class_scores: so.Mapped[Optional[List['AssessmentScore']]] = so.relationship() #this works, but can I add to it?
 
     def __repr__(self):
         if self.grade_level == 0:
@@ -224,7 +221,7 @@ class Classroom(db.Model):
     def to_dict(self):
         teacher_name = db.session.scalar(sa.select(
             Staff.full_name).where(
-                Staff.id == self.teacher_id)) #for some reason this isn't working properly, giving wrong name
+                Staff.id == self.teacher_id)) 
         if self.grade_level == 0:
             data = {
                 'school_year': self.school_year,
@@ -242,14 +239,21 @@ class Classroom(db.Model):
         return data
     
     def classroom_roster(self):
-        classroom_roster = []
         students = self.class_students
-        for student in students:
-            class_student = {
+        classroom_roster = [{
                 'student_id': student.class_student.id,
                 'student_name':student.class_student.full_name}
-            classroom_roster.append(class_student)
+                for student in students]
         return classroom_roster
+    
+    def get_grade_level_assessments(self):
+        '''return assessments for class grade level'''
+        standards = db.session.scalars(sa.select(AssessmentStandard).where(
+            AssessmentStandard.grade_level == self.grade_level
+        ))        
+        comp_objs = [s.standard_components for s in standards]    
+        gl_assessments = set([c.assessment_name for c in comp_objs])
+        return gl_assessments
     
 
 class Student(db.Model):
@@ -306,7 +310,6 @@ class StudentClassroomAssociation(db.Model):
 
     class_student: so.Mapped['Student'] = so.relationship(back_populates='student_classes')
     student_class: so.Mapped['Classroom'] = so.relationship(back_populates='class_students')
-    
 
     def __repr__(self):
         return '<Student:{}, Class:{}>'.format(self.student_id, self.classroom_id)
@@ -322,13 +325,16 @@ class StudentClassroomAssociation(db.Model):
         return data
     
 class AssessmentComponent(db.Model):
-    '''New table for assessment components, separate from assessment standards'''
+    '''New table for assessment components (separated from assessment_standards)'''
     id: so.Mapped[str] = so.mapped_column(primary_key=True)
     subject: so.Mapped[str] = so.mapped_column(sa.String(50))
     component_name: so.Mapped[str] = so.mapped_column(sa.String(100))
     assessment_name: so.Mapped[str] = so.mapped_column(sa.String(100))
-
+    benchmark: so.Mapped[bool] = so.mapped_column(sa.Boolean) #returns True if component is benchmark score
+    
+    #Relationship: Returns list of all AssessmentStandard objects (all gls & periods) for component
     component_standards: so.Mapped[List['AssessmentStandard']] = so.relationship()
+    #Relationship: Returns list of all Scores for component
     component_scores: so.Mapped[List['AssessmentScore']] = so.relationship()
 
     def __repr__(self):
@@ -342,22 +348,44 @@ class AssessmentComponent(db.Model):
             'subject': self.subject
         }
         return data
+    
+    @staticmethod
+    def get_by_id(component_id):
+        return db.session.query(AssessmentComponent).filter_by(id=component_id).first()
+    
+    def short_assessment_name(self):
+        letters = [w[0] for w in self.assessment_name.split() if len(w)>2]
+        return ''.join(letters)
+
 
 class AssessmentScore(db.Model):
     '''Student assessment scores'''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
     period: so.Mapped[int] = so.mapped_column(sa.Integer)
-    score_tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String) #remove this?
+    score_tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String) 
+    class_assessment_id: so.Mapped[str] = so.mapped_column(sa.String) #new column, need id for assessment/period entered (prob something that can be done with relationships??)
     component_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
     student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
     classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
     
+    
     def __repr__(self):
         return '<Score {}>'.format(self.student_score)
     
+    def assessment_name(self):
+        assessment= db.session.scalar(sa.select(AssessmentComponent).where(
+            AssessmentComponent.id == self.component_id
+        ))
+        return assessment.short_assessment_name()
+        
+    def class_assessment_id(self):
+        start = self.assessment_name()
+        self.class_assessment_id = f'{start}-{self.classroom_id}-P{self.period}'
+        return self.class_assessment_id
 
-
+#NEED TO FIND A BETTER WAY TO MAP USER VALUES (like fall, winter, spring) to DB VALUES (1, 2, 3) ** likely using MAP, but could also be another table
+#not sure if creating more tables is unnecessarily complicated
 
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
@@ -369,10 +397,11 @@ class AssessmentStandard(db.Model):
     tier_2: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
     tier_3: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
 
+    #Relationship: Returns related Assessment Component object 
     standard_components: so.Mapped[List['AssessmentComponent']] = so.relationship(back_populates='component_standards')
 
     def __repr__(self):
-        return '<Standard for {}, Grade {}, Period {}, {}: {}>'.format(self.component_id, self.grade_level, self.period, self.tier, self.tier_benchmark)
+        return '<Standard for {}, Grade {}, Period {}>'.format(self.component_id, self.grade_level, self.period)
     
     def to_dict(self):
         data = {
@@ -384,3 +413,14 @@ class AssessmentStandard(db.Model):
             'tier_3': self.tier_3,
         }
         return data 
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    
+    def assessment_name(self):
+        assessment= db.session.scalar(sa.select(AssessmentComponent).where(
+            AssessmentComponent.id == self.component_id
+        ))
+        return assessment
+
+#need to MAP assessment names to component ids and associate grade levels with particular assessments

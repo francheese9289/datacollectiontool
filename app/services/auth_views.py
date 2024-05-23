@@ -6,24 +6,14 @@ from models import User, Staff, db, login_manager
 from forms import UserRegistrationForm, UserLoginForm
 from flask_login import login_user, logout_user, login_required, current_user
 
-auth = Blueprint('auth', __name__, template_folder='../templates/auth')
-templates = Blueprint('templates', __name__)
 
-@login_manager.user_loader
-def load_user(id):
-    return db.session.get(User, int(id))
-
-
-#login route
-@auth.route('/login', methods=['GET', 'POST'])
 def login():
     '''
     Login user by validating login form (email & password).
     Redirect to profile page if/once logged in.
     '''
     if current_user.is_authenticated:
-        base = render_base()
-        return redirect(url_for('main.profile', username=current_user.username))
+        return redirect(url_for('main.user', username=current_user.username))
     
     form = UserLoginForm()
     if form.validate_on_submit():
@@ -38,11 +28,9 @@ def login():
 
         login_user(user, remember=form.remember_me.data)
         
-
         flash('Login successful!', 'success')
         
         return redirect(url_for('main.profile', username=user.username))
-    
     return render_template('login.html', form=form)
 
 
@@ -85,7 +73,6 @@ def register():
 
             #success message
             flash(f'Account created for {user.email}!', 'success')
-            base = render_base()
             return redirect(url_for('main.profile', username=user.username))
     else:
         return render_template('register.html', form=form)
@@ -98,11 +85,4 @@ def logout():
     flash('Logout successful!', 'success')
     return redirect(url_for('main.index'))
 
-
-def render_base():
-    """Create tabs for each GL Assessment in a subject"""
-    user = current_user
-    classroom = user.get_current_classroom()
-    gl_assessments = classroom.get_grade_level_assessments()
-    return render_template('base.html', gl_assessments=gl_assessments)
     

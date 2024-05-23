@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, FormField, Form, SelectField, HiddenField, FloatField, FieldList, IntegerField
+from wtforms import StringField, PasswordField, RadioField, SubmitField, BooleanField, FormField, Form, SelectField, HiddenField, FloatField, FieldList, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo
 from wtforms.widgets import NumberInput, HiddenInput, ListWidget, RadioInput, Select, TextInput, TableWidget
 from models import AssessmentComponent, AssessmentStandard, AssessmentScore, StudentClassroomAssociation, Classroom
@@ -17,7 +17,6 @@ class UserRegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', 
         validators=[DataRequired(), EqualTo('password', message='Passwords Must Match')])
     submit = SubmitField()
-
 
 #Nested Form
 class ComponentForm(Form):

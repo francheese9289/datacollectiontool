@@ -1,10 +1,11 @@
-from models import db, User, login_manager
+from models import db, User, login_manager, Classroom, Student
 from forms import UserRegistrationForm
 import sqlalchemy as sa
 from flask import Blueprint, render_template, flash, redirect, url_for, request, flash, session, abort, jsonify
 from flask_login import login_required, current_user, login_user, logout_user
 
-main = Blueprint('main', __name__, template_folder='main_templates')
+main = Blueprint('main', __name__, template_folder='../templates/main')
+templates = Blueprint('templates', __name__)
 
 login_manager.login_view = 'auth.login'
 
@@ -35,8 +36,9 @@ def profile(username):
     '''
     user=db.first_or_404(sa.select(User).where(User.username == username))
     user_data = user.to_dict()
-    class_data = user.get_current_classroom()
-    return render_template('profile.html', user=user, user_data=user_data, class_data=class_data)
+    current_class = db.session.scalar(sa.select(Classroom).where(Classroom.id==user.get_current_classroom().id))
+    class_roster = current_class.classroom_roster()
+    return render_template('profile.html', user=user, user_data=user_data, current_class=current_class, class_roster=class_roster)
 
 @main.route('/edit_profile/<username>', methods=['GET', 'POST'])
 #testing to see how to make populate_obj work for editing data
@@ -51,3 +53,5 @@ def edit_profile(username):
         db.session.commit() 
         return redirect(url_for('edit_profile', username=username))
     return render_template('edit_profile.html', user=user, form=form)
+
+

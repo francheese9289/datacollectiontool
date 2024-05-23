@@ -1,98 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base</title>
-  <!-- Poppins font import -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <!-- Bulma css -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-  <style>
-  @media(max-width: 500px) {
-      .reverse-columns {
-        flex-direction: column-reverse;
-        display: flex;
-      }
-    }
-
-    .titled {
-      font-family: 'Poppins', sans-serif !important;
-      font-size: 58px !important;
-      font-weight: 400 !important;
-      line-height: 64px !important;
-    }
-
-    .subtitled {
-      font-family: 'Poppins', sans-serif !important;
-      font-size: 22px !important;
-      font-weight: 400 !important;
-      line-height: 36px !important;
-    }
-  </style>
-
-<body>
-  <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
-    <div class="navbar-brand">
-      <a class="navbar-item">
-        <img src="/static/images/insights_white.png" width="100" height="160">
-      </a>
-    </div>
-
-    <div class="navbar-menu">
-
-        {% if current_user.is_authenticated %}
-        <!-- DROPDOWN -->
-        <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link" href="{{ url_for('api.data_entry') }}">
-          Data Entry
-        </a>
-        <div class="navbar-dropdown">
-        <a class="navbar-item" href="{{ url_for('api.data_entry_lit') }}">
-          Literacy
-        </a>
-        <a class="navbar-item" href="{{ url_for('api.data_entry_math') }}">
-          Math
-        </a>
-        <a class="navbar-item" href="#">
-          Social Emotional
-        </a>
-      </div>
-    </div>
-        <a class="navbar-item" href="{{ url_for('dashboard.class_dashboard', classroom_id=current_user.get_current_classroom().id) }}">
-          Insights
-        </a>
-        <a class="navbar-item" href="{{ url_for('main.profile', username=current_user.username) }}">
-          Profile
-        </a>
-        <a class="navbar-item" href="{{ url_for('main.edit_profile', username=current_user.username) }}">
-          Edit Profile
-        </a>
-        <div class="navbar-end">
-          <div class="navbar-item">
-            <div class="buttons">
-              <a class="button is-light is-small" href="{{ url_for('auth.logout') }}">
-                <strong>Logout</strong>
-              </a>
-        {% else %}
-        <div class="navbar-end">
-          <div class="navbar-item">
-            <div class="buttons">
-              <a class="button is-primary" href="{{ url_for('auth.login') }}">
-                <strong>Log in</strong>
-              </a>
-              <a class="button is-light" href="{{ url_for('auth.register') }}">
-                Sign Up
-              </a>
-        {% endif %}
-      </div>
-    </div>
-  </nav>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Insights</title>
+<link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css
+" rel="stylesheet">
 
 </head>
-  {% block content %}
-  {% endblock %}
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<!-- NAVBAR -->
 
-  </body>
+<nav class="navbar navbar-expand bg-primary" data-bs-theme="dark">
+    <div class="container-fluid">
+
+    <!-- Brand Image -->
+    <span class="navbar-brand">
+        <img src="/static/images/insights_white.png" alt="Student Insights" width="90" height="25">
+    </span>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample02" aria-controls="navbarsExample02" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+<div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav me-auto">
+{% if current_user.is_authenticated %}
+    <li class="nav-item">
+        <a class="nav-link" aria-current="page" href="{{ url_for('api.data_entry_params') }}">
+        Data Entry</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" aria-current="page" href="{{ url_for('api.edit_data_params') }}">
+        Edit Data</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" aria-current="page" href="{{ url_for('api.class_dashboard', classroom_id=current_user.get_current_classroom().id) }}">
+        Insights</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('main.profile', username=current_user.username) }}">
+        Profile</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('main.edit_profile', username=current_user.username) }}">
+        Edit Profile</a>
+    </li>
+    </ul>
+        <button class="btn btn-sm btn-light me-2" type="button" href="{{ url_for('auth.logout') }}">Logout</button>
+        {% else %}
+        <button class="btn btn-sm btn-outline-secondary" type="button" href="{{ url_for('auth.register') }}">
+        Register</button>
+{% endif %}
+</div>
+    </div>
+</nav>
+
+
+{% block content %}
+{% endblock %}
+
+</body>
 </html>

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div class="container-fluid bg-success">
+    <br>
+    <h1 class="display-6">Data Entry</h1>
+<div class="card border-outline-success mb-3" style="max-width: 20rem;">
+
+<form method="POST" action="{{ url_for('api.data_entry_params') }}">
+    <div class="card-body">
+        <p class="card=text">Enter assessment scores:</p>
+        <div class="row">
+            <div class="mb-3 col">
+            <select class="form-control form-control-sm" id="assessmentSelect" name="assessment" required>
+            <option value="" selected disabled>Assessment</option>
+            {% for assessment in assessments %}
+            <option value="{{ assessment }}">{{ assessment }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3 col">
+        <select class="form-control form-control-sm" id="periodSelect" name="period" required>
+            <option value="" selected disabled>Period</option>
+            {% for key, value in periods|dictsort %}
+            <option value="{{ key }}">{{ value }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-outline-success btn-sm">Submit</button>
+</div>
+</form>
+
+</div>
+
+</div>
+<br>
+{% endblock %}

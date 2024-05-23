@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container is-fluid bg-success">
+<br>
+    <!-- FORM -->
+    
+
+        <br></br>
+        <h1 class="display-6">Data Entry</h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            {{ form.csrf_token }}
+            
+            <div class="container-fluid">
+            <table class="table table-dark table-hover">
+                <thead class="has-background-warning-5">
+                    <tr class="table-info">
+                        <th scope="col">Student</th>
+                        {% for component in components %}
+                        <th scope="col">{{ component.component_name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in roster_data %}
+                    <tr>
+                        <td scope="row">{{ data.student_name }}</td>
+                        {% for component in components %}
+                        <td>
+                            <input class="form-control" type="number" name="score_{{ data.id }}_{{ component.id }}" value="0.0">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <br>
+            <div class="d-grid gap-2 d-md-block">
+                <button class="btn btn-dark" type="button">Submit</button>
+            </div>
+            <br></br>
+        </form>
+    </div>    
+</div>
+{% endblock %}

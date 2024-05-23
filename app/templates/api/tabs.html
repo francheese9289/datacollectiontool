@@ -1,0 +1,22 @@
+<div class="container">
+    <h1 class="display-6">Literacy Assessments</h1>
+    <!-- Page Tabs -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        {% for assessment in gl_assessments %}
+        <li class="nav-item">
+        </li>
+            <a class="nav-link" id="assessment-tab" data-toggle="tab" href="{{ url_for('api.data_entry'), assessment_name={{ assessment }} }}" role="tab" aria-controls="PAR" aria-selected="true"><small class="text-body-secondary"><strong>{{ assessment_name }}</strong></small></a>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        {% for assessment in gl_assessments %}
+        <div class="tab-pane fade show active" id="{{ assessment }}" role="tabpanel" aria-labelledby="{{ assessment }}-tab">{% includes 'data_entry.html' %}</div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

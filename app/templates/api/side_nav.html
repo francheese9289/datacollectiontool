@@ -1,12 +1,9 @@
-{% extends 'base.html' %}
-
-{% block content %}
 <aside class="menu">
     <p class="menu-label">Data Entry</p>
     <ul class="menu-list">
         <a class="is-active">Literacy</a>
         <ul>
-        <li><a href="{{ url_for('api.data_entry_lit') }}">Predictive Assessment of Reading</a></li>
+        <li><a href="{{ url_for('api.data_entry') }}">Predictive Assessment of Reading</a></li>
         <li><a>AimsWebLiteracy</a></li>
         </ul>
         <a class="is-active">Math</a>
@@ -19,14 +16,12 @@
         <li><a>Daily Check-ins</a></li>
         </ul>
     </li>
+   
 
     <p class="menu-label">Insights</p>
     <ul class="menu-list">
     <li><a>Student</a></li>
-    <li><a href="{{ url_for('dashboard.class_dashboard', classroom_id=current_user.get_current_classroom().id) }}">Classroom</a></li>
+    <li><a href="{{ url_for('api.class_dashboard', classroom_id=current_user.get_current_classroom().id) }}">Classroom</a></li>
     <li><a>School</a></li>
     </ul>
 </aside>
-
-
-{% endblock %}

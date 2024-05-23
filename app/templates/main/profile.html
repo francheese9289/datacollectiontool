@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section class="hero is-small has-background-primary has-text-dark">
+  <div class="hero-body">
+    <div class="container "><strong>WELCOME</strong>
+      <h1 class="title is-1 has-text-light">
+        {{ current_user.first_name }}
+      </h1>
+    </div>
+  </div>
+</section>
+
+<section class="section has-background-primary-10 has-text-light" id="about">
+    
+  <div class="container">
+    <p><strong>{{ current_class }}</strong></p>
+    <div class="table-container">
+      <table class="table is-striped is-narrow is-hoverable text-is-centered">
+        <thead class="has-background-primary">
+        <tr>
+        <th>Student</th>
+        <th>Fall</th>
+        <th>Winter</th>
+        <th>Spring</th>
+        <th>Profile Link</th>
+        </tr>
+      </thead>
+    <tbody>
+      {% for student in class_roster %}
+      <tr>
+      <td>{{ student.student_name }}</td>
+      <td>*list of assessments taken*</td>
+      <td>*list of assessments taken*</td>
+      <td>*list of assessments taken*</td>
+      <td><a>Profile</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+
+
+{% endblock %}

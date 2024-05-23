@@ -38,13 +38,11 @@ def init_app():
         from .main.routes import main
         from .authentication.routes import auth
         from .api.routes import api
-        from .dashboard.routes import dashboard
         
         # register blueprints
         app.register_blueprint(main)
         app.register_blueprint(auth)
         app.register_blueprint(api)
-        app.register_blueprint(dashboard)
         
     return app
 
