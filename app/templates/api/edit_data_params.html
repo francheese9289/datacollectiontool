@@ -2,21 +2,21 @@
 
 {% block content %}
 
-<div class="container-fluid bg-warning">
+<div class="container-fluid">
     <br>
     <h1 class="display-6">Edit Data</h1>
     
-        <div class="card border-primary mb-3" style="max-width: 20rem;">
+        <div class="card card border-info mb-3" style="max-width: 40rem;">
         
 
 
     <form method="POST" action="{{ url_for('api.edit_data_params') }}">
-    <div class="card-body">
+    <div class="card-body ">
         <h4 class="card-title"></h4>
         <p class="card=text">Choose from the options below to edit previously assessment scores.</p>
     <div class="row">
             <div class="mb-3 col">
-        <select class="form-control form-control-sm" id="assessmentSelect" name="assessment" required>
+        <select class="form-select form-select-sm" id="assessmentSelect" name="assessment" required>
             <option value="" selected disabled>Assessment</option>
             {% for assessment in assessments %}
             <option value="{{ assessment }}">{{ assessment }}</option>
@@ -24,7 +24,7 @@
         </select>
             </div>
     <div class="mb-3 col">
-        <select class="form-control form-control-sm" id="periodSelect" name="period" required>
+        <select class="form-select form-select-sm" id="periodSelect" name="period" required>
             <option value="" selected disabled>Period</option>
             {% for key, value in periods.items() %}
                     <option value="{{ key }}">{{ value }}</option>
@@ -33,7 +33,7 @@
     </div>
         </div>
     <div>
-    <button type="submit" class="btn btn-outline-warning btn-sm">Submit</button>
+    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
 </div>
 </form>
 

@@ -1,66 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-<header class="masthead bg-primary text-white text-center">
-    <div class="container d-flex align-items-center flex-column">
-        <!-- Masthead Heading-->
-        <h1 class="masthead-heading text-white mb-0">Dashboard</h1>
-        <!-- Icon Divider-->
-        <div class="divider-custom divider-light">
-            <div class="divider-custom-line"></div>
-            <div class="divider-custom-icon"><i class="fas fa-bar-chart"></i></div>
-            <div class="divider-custom-line"></div>
-        </div>
-        <!-- Masthead Subheading-->
-        <p class="masthead-subheading font-weight-light mb-0">Instructor: {{classroom_info.teacher}}</p>
-    </div>
-</header>
-<!-- Portfolio Section-->
-<section class="page-section portfolio" id="portfolio">
-    <div class="container">
-        <!-- Portfolio Section Heading-->
-        <h4 class="page-section-heading text-center text-uppercase text-secondary mb-0">{{classroom_id}}</h4>
-        <!-- Icon Divider-->
-        <div class="divider-custom">
-            <div class="divider-custom-line"></div>
-            <div class="divider-custom-icon"><i class="fas fa-bar-chart"></i></div>
-            <div class="divider-custom-line"></div>
-        </div>
+<title>Dashboard</title>
+<header class="bg-dark text-white">
 
-        <!-- Portfolio Grid Items-->
-        <div class="row justify-content-center">
-            <!-- Portfolio Item 1-->
-            <div class="col-md-6 col-lg-4 mb-5">
-                <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal1">
-                    <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
-                        <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
-                    </div>
-                    <figure class="figure">
+    <div class="container d-flex flex-column">
+        <br>
+        <h1 class="display-6">Insights</h1>
+        <!-- could make this a select for teachers w. multiple classes -->
+        <p class="lead">{{ classroom_id }}</p>
+        <p>Instructor: {{classroom_info.teacher}}</p>
 
-                        {{ fig | safe }}
-                        <figcaption class="figure-caption">A caption for the above image.</figcaption>
-                    </figure>
-                </div>
+
+    </header>
+
+<!-- High Level Insights-->
+<section>
+<div class="container-fluid text-center">
+    <br>
+    {% for fig in figs %}
+    <div class="d-flex flex-row justify-content-md-center">
+            <figure class="figure">
+                {{ fig | safe }}
+            </figure>
             </div>
-            <!-- Portfolio Item 2-->
-            <div class="col-md-6 col-lg-4 mb-5">
-                <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal2">
-                    <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
-                        <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
-                    </div>
-                    <span class="border border-2 border-primary"></span>
-                    
-                </div>
-            </div>
-            <!-- Portfolio Item 3-->
-            <div class="col-md-6 col-lg-4 mb-5">
-                <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal3">
-                    <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
-                        <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
-                    </div>
-                    {{ math_table | safe }}
-                </div>
-            </div>
-    
+            {% endfor %}
+</section>
+
 
 {% endblock %}

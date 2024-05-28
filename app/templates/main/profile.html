@@ -21,9 +21,8 @@
         <thead class="has-background-primary">
         <tr>
         <th>Student</th>
-        <th>Fall</th>
-        <th>Winter</th>
-        <th>Spring</th>
+        <th>Literacy</th>
+        <th>Math</th>
         <th>Profile Link</th>
         </tr>
       </thead>
@@ -31,10 +30,8 @@
       {% for student in class_roster %}
       <tr>
       <td>{{ student.student_name }}</td>
-      <td>*list of assessments taken*</td>
-      <td>*list of assessments taken*</td>
-      <td>*list of assessments taken*</td>
-      <td><a>Profile</a></td>
+      <td>*percentile*</td>
+      <td>*percentile*</td>
       </tr>
       {% endfor %}
     </tbody>

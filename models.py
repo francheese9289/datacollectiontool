@@ -94,7 +94,7 @@ class Staff(db.Model):
     ) 
 
     def __repr__(self):
-        return '<Staff Member {}>'.format(self.full_name)
+        return (self.full_name)
     
     def staff_profile(self):
         #Moved this function from User to Staff, so that all staff have a profile, regardless if they have an account.
@@ -129,7 +129,7 @@ class User(db.Model, UserMixin):
     
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}>'.format(self.username)    
 
     def set_id(self):
         return str(uuid.uuid4())
@@ -187,7 +187,7 @@ class User(db.Model, UserMixin):
         if self.staff_member:
             staff = db.session.scalar(sa.select(
         Staff).where(Staff.id == self.staff_id))
-            return staff.staff_classrooms[-1]
+            return staff.staff_classrooms[-1] #return classroom object
         else:
             return None
 
@@ -383,6 +383,22 @@ class AssessmentScore(db.Model):
         start = self.assessment_name()
         self.class_assessment_id = f'{start}-{self.classroom_id}-P{self.period}'
         return self.class_assessment_id
+
+    def set_score_tier(self):
+        score_standard = db.session.scalar(sa.select(AssessmentStandard).where(AssessmentStandard.component_id == self.component_id))
+        try:
+            if self.student_score <= score_standard.tier_1:
+                self.score_tier = 'tier_1'
+            elif self.student_score <= score_standard.tier_2:
+                self.score_tier = 'tier_2'
+            else:
+                self.score_tier = 'tier_3'
+            db.session.add(self.score_tier)
+        except:
+            self.score_tier = None
+            db.session.add(self.score_tier)
+        db.session.commit()
+
 
 #NEED TO FIND A BETTER WAY TO MAP USER VALUES (like fall, winter, spring) to DB VALUES (1, 2, 3) ** likely using MAP, but could also be another table
 #not sure if creating more tables is unnecessarily complicated

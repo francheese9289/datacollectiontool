@@ -1,14 +1,13 @@
+import math
 import sqlalchemy as sa
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
 from models import db, AssessmentComponent, AssessmentScore
 from forms import AssessmentScoreForm, ComponentForm, EditAssessmentScoreForm
+from app.services.charts import *
 from app.services.data_analysis import *
 from app.services.api_views import *
 import numpy as np
-from psycopg2.extensions import register_adapter, AsIs
-register_adapter(np.int32, AsIs)
-register_adapter(np.int64, AsIs)
 
 api = Blueprint('api', __name__, url_prefix='/api', template_folder='../templates/api')
 templates = Blueprint('templates', __name__)
@@ -76,164 +75,18 @@ def edit_data(assessment_name):
 @api.route('/classroom/<string:classroom_id>', methods=['GET', 'POST'])
 @login_required
 def class_dashboard(classroom_id, method='GET'):
-    '''
-    This function renders the dashboard page for the user.
-    It is expected to display data related to the user's classroom, including literacy, math, and SEL metrics.
-    For admin dashboards, it will include grade level and school level data in the future.
-    '''
-    #find current user and their most recent classroom
     user=current_user
-    current_class = db.session.scalar(sa.select(Classroom).where(
-        Classroom.id == classroom_id
-    ))
-    print(current_class) #this is printing the correct classroom
+    current_class = user.get_current_classroom()
     classroom_info = current_class.to_dict()
-    df = get_data('21-SPA-0')
-    fig = make_fig(df)
-    
-    return render_template('class_dashboard.html', classroom_info=classroom_info, classroom_id=current_class, fig=fig)
+    data = get_data('21-SPA-0')
 
+    math_data = data[(data.subject == 'math')]
+    lit_data = data[(data.subject == 'literacy')]
+    math_fun_fig= make_funnel(math_data)
+    math_bar_fig = make_bar_fig(math_data)
+    lit_fun_fig= make_funnel(lit_data)
+    lit_bar_fig = make_bar_fig(lit_data)
 
- # user=current_user
-    # current_class = user.get_current_classroom() #returns classroom object
-    # class_score_data = get_data(current_class.id)
-    
+    figs = [lit_bar_fig, math_bar_fig, lit_fun_fig, math_fun_fig]
 
-    # components = class_score_data[['component_id', 'component_name']].drop_duplicates().sort_values('component_name').to_dict('records')
-
-    # selected_period = request.form.get('period') or class_score_data['period'].unique()[0]
-    # filtered_score_data = class_score_data[class_score_data['period'] == int(selected_period)]
-
-    
-    # data = {} #dict for pertinent student score data needed to populate form
-    # for _, row in filtered_score_data.iterrows(): #underscore used to ignore index in loop!
-    #     student = row['student'] #student_name
-    #     if student not in data:
-    #         data[student] = {'scores': []} #list of scores for given assessment
-    #     data[student]['scores'].append({
-    #         'component_id': row['component_id'],
-    #         'score_id': row['score_id'],
-    #         'score_value': row['student_score']
-    #     })
-
-    # form = EditAssessmentScoreForm()
-    
-    # if form.validate_on_submit():
-    #     period = request.form.get('period')
-        
-    #     for student, student_data in data.items():
-    #         for score_data in student_data['scores']:
-    #             score_id = score_data['score_id']
-    #             student_score = request.form.get(f'student_score_{score_id}')
-
-    #             if score_id and student_score is not None:
-    #                 update_score = db.session.query(AssessmentScore).get(score_id)
-    #                 if update_score:
-    #                     update_score.period = period
-    #                     update_score.student_score = student_score
-    #                     db.session.commit()
-
-    # return render_template('edit_data.html', form=form, data=data, components=components, periods=class_score_data['period'].unique(), selected_period=selected_period)
-            
-
-
-
-
-# @api.route('/data_entry/<string:subject>/<string:assessment_name>', methods=['GET', 'POST']) #I would like to clean this function up
-# def data_entry_lit(): 
-#     '''Populate table for user data entry.'''
-#     assessment_name = 'Predictive Assessment of Reading' 
-#     user=current_user
-
-#     current_class = user.get_current_classroom() 
-#     roster_data = current_class.classroom_roster()
-#     print(roster_data)
-
-#     components = db.session.scalars(
-#         sa.select(AssessmentComponent).where(
-#             AssessmentComponent.assessment_name == assessment_name).order_by(
-#                 AssessmentComponent.component_name)).all()
-    
-#     #main form
-#     form = AssessmentScoreForm()
-#     #nested form
-#     component_form = ComponentForm() 
-
-#     if form.validate_on_submit():
-#         period = request.form.get('period')
-        
-#         for student_data in roster_data:
-#             student_id = student_data['student_id']
-            
-#             for component in components:
-#                 component_id = component.id
-                
-#                 # using html form to get the student's score
-#                 score_key = f"score_{student_id}_{component_id}"
-#                 student_score = request.form.get(score_key)
-                
-#                 # create a new score instance and populate its attributes
-#                 new_score = AssessmentScore()
-#                 new_score.period = period
-#                 new_score.component_id = component_id
-#                 new_score.student_id = student_id
-#                 new_score.classroom_id = current_class.id
-#                 new_score.student_score = student_score
-#                 new_score.class_assessment_id = new_score.class_assessment_id()
-#                 # add the score instance to the session
-#                 db.session.add(new_score)
-#         db.session.commit()
-
-#         flash('Data entered successfully!', 'success')
-#         # Need to change this redirect to the dash or a data entry landing page
-#         return redirect(url_for('api.data_entry_lit'))
-#     return render_template('literacy.html', form=form, components=components, component_form=component_form, roster_data=roster_data)
-
-# @api.route('/data_entry/math', methods=['GET', 'POST'])
-# def data_entry_math(): 
-#     assessment_name = 'Primary Number & Operations Assessment' 
-#     user=current_user
-
-#     current_class = user.get_current_classroom() 
-#     roster_data = current_class.classroom_roster()
-
-    
-#     #get all components for a given assessment 
-#     components = db.session.scalars(
-#         sa.select(AssessmentComponent).where(
-#             AssessmentComponent.assessment_name == assessment_name).order_by(
-#                 AssessmentComponent.component_name)).all()
-#     #main form
-#     form = AssessmentScoreForm()
-#     #nested form
-#     component_form = ComponentForm()
-#     if form.validate_on_submit():
-#         period = request.form.get('period')
-        
-#         for student_data in roster_data:
-#             student_id = student_data['id']
-            
-#             for component in components:
-#                 component_id = component.id
-                
-#                 # using html form to get the student's score
-#                 score_key = f"score_{student_id}_{component_id}"
-#                 #I THINK using 'request' allows for CSRF protection?
-#                 student_score = request.form.get(score_key)
-                
-#                 # create a new score instance and populate its attributes
-#                 new_score = AssessmentScore()
-#                 new_score.period = period
-#                 new_score.component_id = component_id
-#                 new_score.student_id = student_id
-#                 new_score.classroom_id = current_class.id
-#                 new_score.student_score = student_score
-                
-#                 # add the score instance to the session
-#                 db.session.add(new_score)
-#         db.session.commit()
-
-#         flash('Data entered successfully!', 'success')
-#         return redirect(url_for('api.index'))
-
-#     return render_template('math.html', assessment_name=assessment_name, form=form, components=components, component_form=component_form, roster_data=roster_data)
+    return render_template(template_name_or_list='class_dashboard.html', classroom_info=classroom_info, classroom_id=current_class, figs=figs)

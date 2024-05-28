@@ -96,19 +96,27 @@ def make_people(num,role):
 def add_fake_scores(class_id, assessment_name, period):
     class_object = db.session.scalar(sa.select(Classroom).where(Classroom.id == class_id))
     roster = class_object.classroom_roster()
-    components = db.session.scalars(sa.select(AssessmentComponent).where(AssessmentComponent.assessment_name==assessment_name)).all()
-    
+    components = db.session.scalars(sa.select(AssessmentComponent).where(AssessmentComponent.assessment_name == assessment_name)).all()
+
     for student in roster:
         for component in components:
-            high = db.session.scalar(sa.select(AssessmentStandard.tier_3).where(AssessmentStandard.component_id == component.id))
-            score = np.random.randint(0, high)
-            new_score = AssessmentScore()
-            new_score.period = period
-            new_score.component_id = component.id
-            new_score.student_id = student['student_id']
-            new_score.classroom_id = class_id
-            new_score.student_score = score
-            new_score.class_assessment_id = new_score.class_assessment_id()
+            standard = db.session.scalar(sa.select(AssessmentStandard).where(AssessmentStandard.component_id == component.id))
+            high = standard.tier_3
+            mid = standard.tier_2
+            low = standard.tier_1
+            std_deviation = (high - mid) / 4
+            
+            score = np.random.normal(loc=mid, scale=std_deviation)
+            score = np.clip(score, 0, high)
+            score=round(score)
+            new_score = AssessmentScore(
+                period=period,
+                component_id=component.id,
+                student_id=student['student_id'],
+                classroom_id=class_id,
+                student_score=score,
+                score_tier = 'tier_1' if score <= low else 'tier_2' if score <= mid else 'tier_3'
+            )
+            
             db.session.add(new_score)
     db.session.commit()
-    

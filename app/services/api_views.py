@@ -98,14 +98,13 @@ def render_edit_data_template(assessment_name, period):
     user = current_user
     current_class = user.get_current_classroom()
     roster_data = current_class.classroom_roster()
-    print('assessment name passed to func:',assessment_name)
+    
     components = AssessmentComponent.query.filter_by(assessment_name=assessment_name).order_by(
         AssessmentComponent.component_name).all()
     class_score_data = get_data(current_class.id)
-    print('unique periods in class_score_data:',class_score_data['period'].unique())
-    print('unique assessment names in class_score_data:',class_score_data['assessment_name'].unique())
+
     filtered_score_data = class_score_data.loc[(class_score_data['assessment_name'] == assessment_name) & (class_score_data['period'] == period)]
-    print('Filtered Scores', filtered_score_data)
+    
     data = {}  # dict for pertinent student score data needed to populate form
     for _, row in filtered_score_data.iterrows():  # underscore used to ignore index in loop!
         student = row['student']  # student_name
@@ -119,16 +118,10 @@ def render_edit_data_template(assessment_name, period):
         })
 
     form = EditAssessmentScoreForm()
-    print("Components:", components)
-    # print("class score data", class_score_data)
-    
-    print('assessment:', assessment_name)
-    print("Data:", data)
-    print("Period:", period, type(period))
     
     return render_template('edit_data.html', form=form, components=components, assessment_name=assessment_name, period=period, roster_data=roster_data, data=data)
 
-from flask import flash, redirect, url_for
+
 
 def process_edit_data_request(assessment_name, period):
     user = current_user
@@ -157,117 +150,60 @@ def process_edit_data_request(assessment_name, period):
     form = EditAssessmentScoreForm()
 
     if form.validate_on_submit():
+        all_valid = True  # flag to check if all updates are valid
         for student, student_data in data.items():
             for score_data in student_data['scores']:
                 score_id = score_data['score_id']
                 student_score = request.form.get(f'student_score_{score_id}')
 
                 if score_id and student_score is not None:
-                    update_score = db.session.query(AssessmentScore).get(score_id)
-                    if update_score:
-                        update_score.period = period
-                        update_score.student_score = student_score
-                        db.session.commit()
+                    try:
+                        update_score = db.session.query(AssessmentScore).get(score_id)
+                        if update_score:
+                            update_score.period = period
+                            update_score.student_score = float(student_score)
+                    except Exception as e:
+                        all_valid = False
+                        flash(f"Error updating score for student {student}: {e}", 'error')
 
-    # Pass flash messages to the template
+        if all_valid:
+            db.session.commit()
+            flash('Scores successfully updated!', 'success')
+            return redirect(url_for('api.edit_data', assessment_name=assessment_name, period=period))
+        else:
+            db.session.rollback()  # rollback if any errors occurred
+            flash('Failed to update scores. Please try again.', 'error')
+            
     return render_template('edit_data.html', form=form, data=data, components=components, assessment_name=assessment_name, period=period)
-# def render_edit_data_parameters():
-#     """Parameters for editing score data in database"""
-#     user=current_user
-#     current_class = user.get_current_classroom() #returns classroom object
-#     class_score_data = get_data(current_class.id)
-
-#     assessments = class_score_data['assessment_name'].unique() #assessments already taken
-#     periods = {1:'fall', 2:'winter', 3:'spring'}
-
-#     assessment_periods = {assessment: set() for assessment in assessments}
-#     for assessment in assessments:
-#         assessment_data = class_score_data[class_score_data['assessment_name'] == assessment]
-#         available_periods = assessment_data['period'].unique()
-#         assessment_periods[assessment] = set(available_periods)
-    
-#     return render_template('edit_data_params.html', assessments=assessments, periods=periods, assessment_periods=assessment_periods)
-
-# def process_edit_data_parameters(selected_assessment=None):
-#     """Parameters for editing score data in database"""
-#     user = current_user
-#     current_class = user.get_current_classroom()  # returns classroom object
-#     class_score_data = get_data(current_class.id)  # gets db info of already entered assessments and the periods for which they were entered
-
-#     assessments = class_score_data['assessment_name'].unique()  # assessments already taken
-#     periods = {1: 'fall', 2: 'winter', 3: 'spring'}
-
-#     # Create a dictionary to hold available periods for each assessment
-#     assessment_periods = {assessment: set() for assessment in assessments}
-#     for assessment in assessments:
-#         assessment_data = class_score_data[class_score_data['assessment_name'] == assessment]
-#         available_periods = assessment_data['period'].unique()
-#         assessment_periods[assessment] = set(available_periods)
-
-#     return render_template('edit_data_params.html', assessments=assessments, periods=periods, assessment_periods=assessment_periods, selected_assessment=selected_assessment)
-
-# def render_edit_data_template(assessment_name, period):
-#     user=current_user
-
-#     current_class = user.get_current_classroom() 
-#     roster_data = current_class.classroom_roster()
-#     components = AssessmentComponent.query.filter_by(assessment_name=assessment_name).order_by(
-#         AssessmentComponent.component_name).all()
-#     class_score_data = get_data(current_class.id)
-    
-#     filtered_score_data = class_score_data[(class_score_data['period'] == period
-#                                             ) & (class_score_data['assessment_name'] == assessment_name)]
-
-#     data = {} #dict for pertinent student score data needed to populate form
-#     for _, row in filtered_score_data.iterrows(): #underscore used to ignore index in loop!
-#         student = row['student'] #student_name
-#         if student not in data:
-#             data[student] = {'scores': []} #list of scores for given assessment
-#         data[student]['scores'].append({
-#             'component_id': row['component_id'],
-#             'score_id': row['score_id'],
-#             'score_value': row['student_score']
-#         })
-
-#     form = EditAssessmentScoreForm()
-    
-#     return render_template('data_entry.html', form=form, components=components, assessment_name=assessment_name, roster_data=roster_data)
 
 
-# def process_edit_data_request(assessment_name, period):
-#     user=current_user
-
-#     current_class = user.get_current_classroom() 
-#     class_score_data = get_data(current_class.id)
-    
-#     filtered_score_data = class_score_data[(class_score_data['period'] == period
-#                                             ) & (class_score_data['assessment_name'] == assessment_name)]
-#     components = filtered_score_data[['component_id', 'component_name']].drop_duplicates().sort_values('component_name').to_dict('records')
-#     data = {} #dict for pertinent student score data needed to populate form
-#     for _, row in filtered_score_data.iterrows(): #underscore used to ignore index in loop!
-#         student = row['student'] #student_name
-#         if student not in data:
-#             data[student] = {'scores': []} #list of scores for given assessment
-#         data[student]['scores'].append({
-#             'component_id': row['component_id'],
-#             'score_id': row['score_id'],
-#             'score_value': row['student_score']
-#         })
-
-#     form = EditAssessmentScoreForm()
-
-#     if form.validate_on_submit():
+# def make_something(class_id):
+#     classroom = db.session.scalar(sa.select(Classroom).where(Classroom.id == class_id))
+#     class_scores = classroom.class_scores
+#     comp_score_dict ={}
+#     i=0
+#     for score in class_scores:
+#         comp_score_dict[score.period]={
+#             'component': score.component_id,
+#             'scores': [s for s in score.student_score],
+#             ''
+#         }
         
-#         for student, student_data in data.items():
-#             for score_data in student_data['scores']:
-#                 score_id = score_data['score_id']
-#                 student_score = request.form.get(f'student_score_{score_id}')
 
-#                 if score_id and student_score is not None:
-#                     update_score = db.session.query(AssessmentScore).get(score_id)
-#                     if update_score:
-#                         update_score.period = period
-#                         update_score.student_score = student_score
-#                         db.session.commit()
 
-#     return render_template('edit_data.html', form=form, data=data, components=components)
+# def class_percentiles(class_id, subject): 
+#     data = get_data(class_id)
+#     #create new list of dicts with subject specific scores
+#     new_data=[]
+#     for datum in data:
+#         filtered_dict = {k:v for k,v in datum.items() if datum['subject'] == subject}
+#         new_data.append(filtered_dict)
+
+#     #break out data by periods
+#     comp_arrays = {}
+#     for dict in new_data:
+#         score_array=[]
+#         component = dict['component_name']
+
+#     #get student scores for each component
+#     #use get percentile func. 

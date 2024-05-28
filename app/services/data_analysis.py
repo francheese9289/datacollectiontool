@@ -1,4 +1,5 @@
 import json
+from numpy import percentile
 import plotly.graph_objs as go
 import plotly.figure_factory as ff
 import plotly.subplots as make_subplots
@@ -8,14 +9,7 @@ from models import *
 from app.services.charts import *
 
 
-        
-def get_assessment_name(component_id):
-    component = AssessmentComponent.get_by_id(component_id)
-    if component:
-        return component.name
-    return None
-
-def get_data(classroom): #could probably simplify this now that I have ids for class assessments
+def get_data(classroom): #could probably simplify this now 
     
     class_scores = db.session.execute(
         sa.select(AssessmentScore).where(AssessmentScore.classroom_id == classroom)
@@ -57,6 +51,7 @@ def get_data(classroom): #could probably simplify this now that I have ids for c
         classroom = classroom_map[score.classroom_id]
         standard_key = (score.component_id, classroom.grade_level, score.period)
         standard = standard_map.get(standard_key)
+        
 
         if standard:
             if score.student_score <= standard.tier_1:
@@ -74,6 +69,7 @@ def get_data(classroom): #could probably simplify this now that I have ids for c
             'component_id': score.component_id,
             'component_name': comp.component_name,
             'assessment_name': comp.assessment_name,
+            'benchmark':comp.benchmark,
             'subject': comp.subject,
             'period': score.period,
             'student': student.full_name,
@@ -87,3 +83,12 @@ def get_data(classroom): #could probably simplify this now that I have ids for c
 
 
 
+
+# Make some charts/data for standards to compare against??? 
+
+def calculate_percentiles(data_set):
+    tier_one = (data_set, 10)
+    tier_two = (data_set, 50)
+    tier_three = (data_set, 99)
+    data_percentiles = {'10th':tier_one,'50th': tier_two, '99th': tier_three}
+    return data_percentiles
