@@ -1,7 +1,3 @@
-from enum import unique
-from hashlib import file_digest
-import json
-from pkgutil import get_data
 import plotly.graph_objs as go
 import plotly.figure_factory as ff
 import plotly.subplots as make_subplots

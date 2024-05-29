@@ -4,11 +4,6 @@ certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-dash==2.15.0
-dash-bootstrap-components==1.5.0
-dash-core-components==2.0.0
-dash-html-components==2.0.0
-dash-table==5.0.0
 Flask==3.0.2
 Flask-Cors==4.0.0
 Flask-Login==0.6.3
