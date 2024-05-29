@@ -1,8 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, RadioField, SubmitField, BooleanField, FormField, Form, SelectField, HiddenField, FloatField, FieldList, IntegerField
+from wtforms import StringField, PasswordField, RadioField, SubmitField, BooleanField, FormField, Form, SelectField, HiddenField, FloatField, FieldList
 from wtforms.validators import DataRequired, Email, EqualTo
-from wtforms.widgets import NumberInput, HiddenInput, ListWidget, RadioInput, Select, TextInput, TableWidget
-from models import AssessmentComponent, AssessmentStandard, AssessmentScore, StudentClassroomAssociation, Classroom
+from wtforms.widgets import NumberInput
 class UserLoginForm(FlaskForm):
     email = StringField('Email', validators = [DataRequired(), Email(message='enter a valid email')])
     password = PasswordField('Password', validators = [DataRequired()])
