@@ -358,50 +358,6 @@ class AssessmentComponent(db.Model):
         return ''.join(letters)
 
 
-class AssessmentScore(db.Model):
-    '''Student assessment scores'''
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
-    period: so.Mapped[int] = so.mapped_column(sa.Integer)
-    score_tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String) 
-    class_assessment_id: so.Mapped[str] = so.mapped_column(sa.String) #new column, need id for assessment/period entered (prob something that can be done with relationships??)
-    component_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
-    student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
-    classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
-    
-    
-    def __repr__(self):
-        return '<Score {}>'.format(self.student_score)
-    
-    def assessment_name(self):
-        assessment= db.session.scalar(sa.select(AssessmentComponent).where(
-            AssessmentComponent.id == self.component_id
-        ))
-        return assessment.short_assessment_name()
-        
-    def class_assessment_id(self):
-        start = self.assessment_name()
-        self.class_assessment_id = f'{start}-{self.classroom_id}-P{self.period}'
-        return self.class_assessment_id
-
-    def set_score_tier(self):
-        score_standard = db.session.scalar(sa.select(AssessmentStandard).where(AssessmentStandard.component_id == self.component_id))
-        try:
-            if self.student_score <= score_standard.tier_1:
-                self.score_tier = 'tier_1'
-            elif self.student_score <= score_standard.tier_2:
-                self.score_tier = 'tier_2'
-            else:
-                self.score_tier = 'tier_3'
-            db.session.add(self.score_tier)
-        except:
-            self.score_tier = None
-            db.session.add(self.score_tier)
-        db.session.commit()
-
-
-#NEED TO FIND A BETTER WAY TO MAP USER VALUES (like fall, winter, spring) to DB VALUES (1, 2, 3) ** likely using MAP, but could also be another table
-#not sure if creating more tables is unnecessarily complicated
 
 class AssessmentStandard(db.Model):
     '''general information about each assessment'''
@@ -415,6 +371,7 @@ class AssessmentStandard(db.Model):
 
     #Relationship: Returns related Assessment Component object 
     standard_components: so.Mapped[List['AssessmentComponent']] = so.relationship(back_populates='component_standards')
+    
 
     def __repr__(self):
         return '<Standard for {}, Grade {}, Period {}>'.format(self.component_id, self.grade_level, self.period)
@@ -439,4 +396,70 @@ class AssessmentStandard(db.Model):
         ))
         return assessment
 
-#need to MAP assessment names to component ids and associate grade levels with particular assessments
+class AssessmentScore(db.Model):
+    '''Student assessment scores'''
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    student_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float)
+    period: so.Mapped[int] = so.mapped_column(sa.Integer)
+    score_tier: so.Mapped[Optional[str]] = so.mapped_column(sa.String) 
+    component_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentComponent.id))
+    student_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Student.id)) 
+    classroom_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Classroom.id))
+    standard_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(AssessmentStandard.id))
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_standard_id()
+        
+    def __repr__(self):
+        return '<Score {}>'.format(self.student_score)
+    
+    def assessment_name(self):
+        assessment= db.session.scalar(sa.select(AssessmentComponent).where(
+            AssessmentComponent.id == self.component_id
+        ))
+        return assessment.short_assessment_name()
+        
+    def class_assessment_id(self):
+        start = self.assessment_name()
+        self.class_assessment_id = f'{start}-{self.classroom_id}-P{self.period}'
+        return self.class_assessment_id
+    
+    def set_standard_id(self):
+        grade_level = db.session.scalar(sa.select(Classroom.grade_level).where(Classroom.id == self.classroom_id))
+        standard_id = db.session.scalar(sa.select(AssessmentStandard.id).where(
+            sa.and_(
+                AssessmentStandard.component_id == self.component_id,
+                AssessmentStandard.grade_level == grade_level,
+                AssessmentStandard.period == self.period
+            )
+        ))
+        self.standard_id = standard_id
+        return standard_id
+    
+def bulk_update_standard_ids():
+    # Subquery to find the appropriate standard_id for each assessment score
+    subquery = sa.select(
+        AssessmentScore.id.label('score_id'),
+        AssessmentStandard.id.label('standard_id')
+    ).join(
+        Classroom, AssessmentScore.classroom_id == Classroom.id
+    ).join(
+        AssessmentStandard,
+        sa.and_(
+            AssessmentStandard.component_id == AssessmentScore.component_id,
+            AssessmentStandard.grade_level == Classroom.grade_level,
+            AssessmentStandard.period == AssessmentScore.period
+        )
+    ).subquery()
+    
+    # Update statement to set the standard_id
+    stmt = db.update(AssessmentScore).values(
+        standard_id=subquery.c.standard_id
+    ).where(
+        AssessmentScore.id == subquery.c.score_id
+    )
+    
+    # Execute the update statement
+    db.session.execute(stmt)
+    db.session.commit()

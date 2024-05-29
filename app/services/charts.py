@@ -1,7 +1,7 @@
 from enum import unique
 from hashlib import file_digest
 import json
-from pkgutil import get_data
+# from pkgutil import get_subject_data
 import plotly.graph_objs as go
 import plotly.figure_factory as ff
 import plotly.subplots as make_subplots
@@ -9,65 +9,57 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from models import *
+from app.services.data_analysis import add_ranks
+
 
 
 #each df row = funnel level
 def make_funnel(data):
-    """Funnel chart logic"""
-    #create pct rank column
-    data['percentile_rank'] = data.groupby(['period'])['student_score'].rank(pct=True)
+    """
+    Funnel charts for avg scores and class & national rankings in a single subject.
+    **later iterations will need to separate assessment types, currently only have 1 assess/subject**
+    """
 
-    data['tier'] = data['percentile_rank'].apply(assign_tier)
+    #average student scores and standards for all components in a single period
+    subject_data = data.groupby(['period','student']).mean(numeric_only = True)[['period','student','student_score','tier_1','tier_2','tier_3']]
 
-    #data for labelling
-    periods = {1:'fall',2:'winter',3:'spring'}
-    subject = data.iloc[1,6]
-    
-    funnel_df = data.groupby(['period','tier'], as_index=False).nunique()[['period','tier','student']]
+    ranked_data = (period.apply(add_ranks) for period in subject_data['periods'])
 
-    funnel_df['p_name'] = funnel_df['period'].map(periods)
+    #subject_data for labelling
+    periods = {1:'fall', 2:'winter', 3:'spring'}
+    ranked_data['p_name'] = ranked_data['period'].map(periods)
+    subject = subject_data.iloc[1,6] #gets name of subject (i.e. literacy, math, sel)
 
-    funnel_df = funnel_df.sort_values('tier', ascending=False)
+    df = ranked_data.groupby(['period','rank']).nunique()[['period','rank','student']]
 
-    fig = px.funnel(funnel_df, x='student', y='tier', color='tier', facet_col='p_name',
+
+    fig = px.bar(df, x='student', y='rank', color='tier', facet_row='p_name', 
                     width=800, height=400,
-                    labels= {'p_name':'Period','student':'Student Cnt','tier':'Tier'},
-                    title=f'Student Tier Rankings in {subject.title()}')
+                    labels= {'p_name':'Period','student':'Student Cnt','class_rank':'Rank'},
+                    title=f'Student class_rank Rankings in {subject.title()}')
 
 
     fig = fig.to_html(full_html=False)
 
     return fig
 
-def get_unique_cnt(array):
-    unique_count = np.unique(array, return_counts=True)
-    return unique_count
 
-def assign_tier(percentile_rank):
-    if percentile_rank <= 0.1:
-        return 'Tier 3'
-    elif percentile_rank <= 0.5:
-        return 'Tier 2'
-    else:
-        return 'Tier 1'
-
-
-def make_bar_fig(data):
-    '''Create a highlevel view of assessment data by subject'''
+def make_bar_fig(subject_data):
+    '''Create a highlevel view of assessment subject_data by subject'''
 
     
-    df = data.groupby(['period','component_name','student_score'], as_index=False).agg(
-        avg_score = ('student_score', np.mean)
+    df = subject_data.groupby(['period','component_name','student_score'], as_index=False).agg(
+        student_score = ('student_score', np.mean)
     )
 
-    #data for labelling
-    subject = data.iloc[1,6]
+    #subject_data for labelling
+    subject = subject_data.iloc[1,6]
     periods = {1:'fall',2:'winter',3:'spring'}
     df['p_name'] = df['period'].map(periods)
     
     
-    fig = px.bar(df, x='component_name', y='avg_score', facet_row='p_name', color='component_name',
-                labels={'component_name':'Components','avg_score':'Avg Score','p_name':'p'},
+    fig = px.bar(df, x='component_name', y='student_score', facet_row='p_name', color='component_name',
+                labels={'component_name':'Components','student_score':'Avg Score','p_name':'p'},
                 width=800, height=800,
                 title=f'Class Averages in {subject.title()} by Period')
 
@@ -109,11 +101,11 @@ def make_bar_fig(data):
 #     grouped = df.groupby(level=0)
 #     asjson = json.dumps(df)
 
-#     fig = go.Figure(data=[go.Table(
-#         header=dict(values=['Student','Period','Component','Score','Tier'],
+#     fig = go.Figure(subject_data=[go.Table(
+#         header=dict(values=['Student','Period','Component','Score','class_rank'],
 #                     fill_color='paleturquoise',
 #                     align='left'),
-#         cells=dict(values=[asjson.student, asjson.period, asjson.component_name, asjson.student_score, asjson.tier],
+#         cells=dict(values=[asjson.student, asjson.period, asjson.component_name, asjson.student_score, asjson.class_rank],
 #                 fill_color='lavender',
 #                 align='left'))
 #                 ])

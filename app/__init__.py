@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_login import LoginManager
 from config import Config
-from models import db, User, login_manager
+from models import db, User, login_manager, AssessmentScore
 from werkzeug.middleware.profiler import ProfilerMiddleware
 
 
@@ -58,4 +58,8 @@ if __name__ == "__main__":
 
 
 app
+
+@app.shell_context_processor
+def make_shell_context():
+    return {'db': db, 'AssessmentScore': AssessmentScore}
 
