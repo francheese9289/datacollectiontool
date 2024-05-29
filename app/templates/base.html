@@ -43,10 +43,6 @@
         <a class="nav-link" href="{{ url_for('main.profile', username=current_user.username) }}">
         Profile</a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('main.edit_profile', username=current_user.username) }}">
-        Edit Profile</a>
-    </li>
     </ul>
         <a class="btn btn-sm btn-light me-2" type="button" href="{{ url_for('auth.logout') }}">Logout</a>
         <div class="dark-mode-toggle">
