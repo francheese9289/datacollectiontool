@@ -17,7 +17,6 @@ def init_app():
     #plugins
     db.init_app(app) 
     login_manager.init_app(app)
-    # ProfilerMiddleware(app)
 
 
     #database connection
@@ -28,11 +27,6 @@ def init_app():
     def teardown_db(exception=None):
         db.session.remove()
     
-    # @app.before_request
-    # def print_connection_status():
-    #     print("Active connections:", db.engine.pool.status())
-
-
     with app.app_context():
         # blueprints 
         from .main.routes import main
@@ -47,15 +41,4 @@ def init_app():
     return app
 
 
-app = init_app()
-
-a = ProfilerMiddleware(app)
-
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')
-
-
-
-app
-
+# app = init_app()

@@ -10,7 +10,7 @@ class Config():
     '''App configuration settings'''
     SECRET_KEY=os.getenv('SECRET_KEY')
     FLASK_APP = os.getenv('FLASK_APP')
-    FLASK_DEBUG = os.getenv('FLASK_DEBUG')
+    FLASK_ENV = os.getenv('FLASK_ENV')
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI')
     SQLALCHEMY_TRACK_NOTIFICATIONS= False
     #max number of connections, adjust as needed

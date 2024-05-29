@@ -11,9 +11,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 login_manager = LoginManager()
 
-###To insepect database tables use: psql postgresql://vydvbwqr:stgmpejxJhNPWLBWa9PL5JO39puT7k2H@salt.db.elephantsql.com/vydvbwqr
-##Can use SQL queries during inspection \dt \d \q
-
 class Permission: #Permission Constants - BITWISE
     '''Varying permission levels to be assigned individually or to Roles'''
     PUBLIC = 1    # 0b00001
